@@ -1,0 +1,27 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Id": "org.fw-fanctrl.plasmoid",
+        "Name": "Fan",
+        "Name[zh_CN]": "风扇",
+        "Description": "Control Framework laptop fan strategies",
+        "Description[zh_CN]": "控制 Framework 笔记本电脑的风扇策略",
+        "Icon": "computer-fan",
+        "Version": "1.0.1",
+        "License": "GPL-3.0-or-later",
+        "Authors": [
+            {
+                "Name": "iwinoid",
+                "Email": "iwinoid@outlook.com"
+            }
+        ],
+        "Category": "Hardware",
+        "Website": "https://github.com/iwinoid/fw-fanctrl-kde",
+        "EnabledByDefault": true
+    },
+    "X-Plasma-API": "declarativeappletscript",
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "X-Plasma-MainScript": "ui/main.qml",
+    "X-Plasma-NotificationArea": "true",
+    "X-Plasma-NotificationAreaCategory": "Hardware"
+}
