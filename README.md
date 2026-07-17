@@ -10,7 +10,8 @@ A vibe coding program, powered with ![DeepSeek V4](https://img.shields.io/badge/
 
 - **Real-time status**: Displays current temperature, fan speed, and active strategy
 - **Strategy slider**: Quickly switch between strategies (Silent ↔ Performance)
-- **System tray integration**
+- **System tray integration**: Hover and scroll on the tray icon to cycle between strategies
+- **OSD integration**: Compatible with KDE's On-Screen Display for strategy change notifications
 - **Configuration editor**: Create, edit, rename, and delete strategies; configure speed curves
 
 ## Screenshots
