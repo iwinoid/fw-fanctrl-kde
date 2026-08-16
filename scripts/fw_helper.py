@@ -1,118 +1,152 @@
 #!/usr/bin/env python3
 """
 fw-fanctrl helper script for KDE Plasma 6 Plasmoid.
-Handles config reading/writing with JSON validation and pkexec for privileged operations.
+
+Wraps the fw-fanctrl CLI and returns JSON on stdout.  All CLI calls have
+timeouts so a stuck fw-fanctrl process can never freeze the plasmoid.
 """
 
 import json
 import os
 import subprocess
 import sys
-import shutil
 
 CONFIG_PATH = "/etc/fw-fanctrl/config.json"
 SCHEMA_PATH = "/etc/fw-fanctrl/config.schema.json"
 
+CLI_TIMEOUT = 10       # normal status/action commands
+SAVE_TIMEOUT = 60      # set_config may validate a larger payload
 
-# ─── fw-fanctrl CLI wrappers ───────────────────────────────────────
+
+def _clip_message(message, limit=400):
+    message = (message or "").strip()
+    if len(message) > limit:
+        return message[:limit] + "…"
+    return message
+
+
+def _run_json_command(args, timeout=CLI_TIMEOUT):
+    """Run a fw-fanctrl command in JSON mode and normalize its result."""
+    try:
+        output = subprocess.check_output(
+            args, stderr=subprocess.STDOUT, timeout=timeout
+        ).decode("utf-8", "replace").strip()
+        data = json.loads(output)
+    except FileNotFoundError:
+        return {"success": False, "message": "fw-fanctrl not found"}
+    except subprocess.TimeoutExpired:
+        return {"success": False, "message": "fw-fanctrl command timed out"}
+    except subprocess.CalledProcessError as e:
+        return {
+            "success": False,
+            "message": _clip_message(e.output.decode("utf-8", "replace") if e.output else "Command failed"),
+        }
+    except (json.JSONDecodeError, OSError) as e:
+        return {"success": False, "message": _clip_message(str(e))}
+
+    if data.get("status") != "success":
+        return {
+            "success": False,
+            "message": _clip_message(data.get("reason") or data.get("message") or "fw-fanctrl command failed"),
+        }
+    return {"success": True, "message": data}
+
 
 def get_status():
-    """Return current status from fw-fanctrl including temp, fan speed, strategy."""
+    """Return current status from fw-fanctrl including temp, fan speed, strategy.
+
+    fw-fanctrl's `print all` already contains the whole configuration, so the
+    strategy list is extracted here as well; the plasmoid only needs one CLI
+    call per poll instead of two.
+    """
     try:
         output = subprocess.check_output(
             ["fw-fanctrl", "--output-format", "JSON", "print", "all"],
-            stderr=subprocess.STDOUT
-        ).decode("utf-8").strip()
+            stderr=subprocess.STDOUT,
+            timeout=CLI_TIMEOUT,
+        ).decode("utf-8", "replace").strip()
         data = json.loads(output)
-        if data.get("status") == "success":
-            return {
-                "online": True,
-                "currentStrategy": data.get("strategy", ""),
-                "temperature": data.get("temperature"),
-                "fanSpeed": data.get("speed"),
-                "active": data.get("active", False),
-                "movingAverageTemperature": data.get("movingAverageTemperature"),
-                "effectiveTemperature": data.get("effectiveTemperature")
-            }
-        return {"online": False, "currentStrategy": ""}
-    except (subprocess.CalledProcessError, FileNotFoundError, json.JSONDecodeError):
-        return {"online": False, "currentStrategy": ""}
+    except FileNotFoundError:
+        return {"online": False, "currentStrategy": "", "strategies": [], "error": "fw-fanctrl not found"}
+    except subprocess.TimeoutExpired:
+        return {"online": False, "currentStrategy": "", "strategies": [], "error": "fw-fanctrl command timed out"}
+    except subprocess.CalledProcessError as e:
+        return {
+            "online": False,
+            "currentStrategy": "",
+            "strategies": [],
+            "error": _clip_message(e.output.decode("utf-8", "replace") if e.output else "Command failed"),
+        }
+    except (json.JSONDecodeError, OSError) as e:
+        return {"online": False, "currentStrategy": "", "strategies": [], "error": _clip_message(str(e))}
+
+    if data.get("status") != "success":
+        return {
+            "online": False,
+            "currentStrategy": "",
+            "strategies": [],
+            "error": _clip_message(data.get("reason") or data.get("message") or "fw-fanctrl status error"),
+        }
+
+    configuration = data.get("configuration") or {}
+    config_data = configuration.get("data") or {}
+    strategies = list((config_data.get("strategies") or {}).keys())
+    if not strategies:
+        strategies = get_strategies().get("strategies", [])
+
+    return {
+        "online": True,
+        "currentStrategy": data.get("strategy", ""),
+        "temperature": data.get("temperature"),
+        "fanSpeed": data.get("speed"),
+        "active": data.get("active", False),
+        "movingAverageTemperature": data.get("movingAverageTemperature"),
+        "effectiveTemperature": data.get("effectiveTemperature"),
+        "strategies": strategies,
+    }
 
 
 def get_strategies():
-    """Return list of available strategies."""
-    try:
-        output = subprocess.check_output(
-            ["fw-fanctrl", "print", "list"],
-            stderr=subprocess.STDOUT
-        ).decode("utf-8").strip()
-        strategies = []
-        for line in output.splitlines():
-            line = line.strip()
-            if line.startswith("- "):
-                strategies.append(line[2:])
-        return {"strategies": strategies}
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    """Return available strategies using fw-fanctrl's JSON output."""
+    result = _run_json_command(["fw-fanctrl", "--output-format", "JSON", "print", "list"])
+    if not result["success"]:
         return {"strategies": []}
+    return {"strategies": result["message"].get("strategies", []) if isinstance(result["message"], dict) else []}
 
 
 def set_strategy(name):
     """Set active strategy."""
-    try:
-        output = subprocess.check_output(
-            ["fw-fanctrl", "use", name],
-            stderr=subprocess.STDOUT
-        ).decode("utf-8").strip()
-        return {"success": True, "message": output}
-    except subprocess.CalledProcessError as e:
-        return {"success": False, "message": e.output.decode("utf-8").strip()}
-    except FileNotFoundError:
-        return {"success": False, "message": "fw-fanctrl not found"}
+    result = _run_json_command(["fw-fanctrl", "--output-format", "JSON", "use", name])
+    if result["success"] and isinstance(result["message"], dict):
+        result["message"] = result["message"].get("strategy", name)
+    return result
 
 
 def do_reload():
     """Reload fw-fanctrl configuration."""
-    try:
-        output = subprocess.check_output(
-            ["fw-fanctrl", "reload"],
-            stderr=subprocess.STDOUT
-        ).decode("utf-8").strip()
-        return {"success": True, "message": output}
-    except subprocess.CalledProcessError as e:
-        return {"success": False, "message": e.output.decode("utf-8").strip()}
-    except FileNotFoundError:
-        return {"success": False, "message": "fw-fanctrl not found"}
+    result = _run_json_command(["fw-fanctrl", "--output-format", "JSON", "reload"])
+    if result["success"]:
+        result["message"] = "Reloaded"
+    return result
 
 
 def do_pause():
     """Pause fan control."""
-    try:
-        output = subprocess.check_output(
-            ["fw-fanctrl", "pause"],
-            stderr=subprocess.STDOUT
-        ).decode("utf-8").strip()
-        return {"success": True, "message": output}
-    except subprocess.CalledProcessError as e:
-        return {"success": False, "message": e.output.decode("utf-8").strip()}
-    except FileNotFoundError:
-        return {"success": False, "message": "fw-fanctrl not found"}
+    result = _run_json_command(["fw-fanctrl", "--output-format", "JSON", "pause"])
+    if result["success"]:
+        result["message"] = "Paused"
+    return result
 
 
 def do_resume():
     """Resume fan control."""
-    try:
-        output = subprocess.check_output(
-            ["fw-fanctrl", "resume"],
-            stderr=subprocess.STDOUT
-        ).decode("utf-8").strip()
-        return {"success": True, "message": output}
-    except subprocess.CalledProcessError as e:
-        return {"success": False, "message": e.output.decode("utf-8").strip()}
-    except FileNotFoundError:
-        return {"success": False, "message": "fw-fanctrl not found"}
+    result = _run_json_command(["fw-fanctrl", "--output-format", "JSON", "resume"])
+    if result["success"]:
+        result["message"] = "Resumed"
+    return result
 
 
-# ─── Config read/write ─────────────────────────────────────────────
+# ─── Config read/save ──────────────────────────────────────────────
 
 def read_config():
     """Read the fw-fanctrl config file. Returns config dict or error."""
@@ -123,7 +157,6 @@ def read_config():
         with open(CONFIG_PATH, "r", encoding="utf-8") as f:
             config = json.load(f)
 
-        # Also read schema for validation reference
         schema = {}
         if os.path.exists(SCHEMA_PATH):
             with open(SCHEMA_PATH, "r", encoding="utf-8") as f:
@@ -139,52 +172,24 @@ def read_config():
 
 
 def save_config(config_json_str):
-    """Save config using pkexec for root privileges."""
-    tmp_path = None
+    """Validate and apply config through fw-fanctrl's official set_config.
+
+    fw-fanctrl validates the JSON against its bundled schema and checks that
+    defaultStrategy / strategyOnDischarging still exist before saving.  It
+    runs as the service user, so no pkexec/temp-file dance is needed.
+    """
     try:
-        # Validate JSON first
-        config = json.loads(config_json_str)
-
-        # Write to a temp file
-        tmp_path = f"/tmp/fw-fanctrl-config-{os.getuid()}.json"
-        with open(tmp_path, "w", encoding="utf-8") as f:
-            json.dump(config, f, indent=4)
-            f.write("\n")
-
-        # Use pkexec to copy to /etc/
-        pkexec_cmd = shutil.which("pkexec")
-        cp_cmd = shutil.which("cp")
-        if not pkexec_cmd:
-            return {"success": False, "message": "pkexec not found. Please install polkit."}
-
-        # Build the copy command
-        result = subprocess.run(
-            [pkexec_cmd, cp_cmd, tmp_path, CONFIG_PATH],
-            capture_output=True, text=True, timeout=30
-        )
-
-        if result.returncode == 0:
-            # Clean up temp file
-            try:
-                os.unlink(tmp_path)
-            except OSError:
-                pass
-            return {"success": True, "message": "Configuration saved successfully"}
-        else:
-            error_msg = result.stderr.strip() or f"Exit code: {result.returncode}"
-            return {"success": False, "message": f"Failed to save config: {error_msg}"}
+        json.loads(config_json_str)
     except json.JSONDecodeError as e:
         return {"success": False, "message": f"Invalid JSON: {e}"}
-    except subprocess.TimeoutExpired:
-        return {"success": False, "message": "pkexec timed out"}
-    except Exception as e:
-        return {"success": False, "message": str(e)}
-    finally:
-        if tmp_path and os.path.exists(tmp_path):
-            try:
-                os.unlink(tmp_path)
-            except OSError:
-                pass
+
+    result = _run_json_command(
+        ["fw-fanctrl", "--output-format", "JSON", "set_config", config_json_str],
+        timeout=SAVE_TIMEOUT,
+    )
+    if result["success"]:
+        result["message"] = "Configuration saved successfully"
+    return result
 
 
 # ─── CLI entry point ───────────────────────────────────────────────
@@ -197,17 +202,13 @@ def print_json(data):
 
 def main():
     if len(sys.argv) < 2:
-        print_json({"error": "No command specified. Commands: get_status, get_strategies, set_strategy <name>, reload, pause, resume, get_config, save_config <json>"})
+        print_json({"error": "No command specified"})
         sys.exit(1)
 
     command = sys.argv[1]
 
     if command == "get_status":
-        # Combine status + strategies
-        status = get_status()
-        strategies_data = get_strategies()
-        status.update(strategies_data)
-        print_json(status)
+        print_json(get_status())
 
     elif command == "get_strategies":
         print_json(get_strategies())
@@ -235,7 +236,7 @@ def main():
         if len(sys.argv) < 3:
             print_json({"success": False, "message": "Missing JSON data"})
             sys.exit(1)
-        json_str = sys.argv[2]
+        json_str = " ".join(sys.argv[2:])
         print_json(save_config(json_str))
 
     else:
