@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import org.kde.plasma.plasmoid
 import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.components as PlasmaComponents3
+import org.kde.plasma.workspace.osd
 import org.kde.kirigami as Kirigami
 
 /**
@@ -18,6 +19,36 @@ PlasmoidItem {
 
     function tr(en, zh) {
         return isChinese ? zh : en
+    }
+
+    // ─── OSD Popup (official KDE OsdWindow + OsdItem) ─────────────
+    OsdWindow {
+        id: osdPopup
+        visible: false
+
+        property alias osdValue: osdContent.osdValue
+        property alias icon: osdContent.icon
+        property alias showingProgress: osdContent.showingProgress
+
+        width: Math.max(Math.min(Screen.desktopAvailableWidth / 2, mainItem.implicitWidth), Kirigami.Units.gridUnit * 15) + leftPadding + rightPadding
+        height: mainItem.implicitHeight + topPadding + bottomPadding
+
+        mainItem: OsdItem {
+            id: osdContent
+            icon: "speedometer"
+        }
+    }
+
+    Timer {
+        id: osdPopupTimer
+        interval: 1800
+        onTriggered: osdPopup.visible = false
+    }
+
+    function showStrategyOSD(strategyName) {
+        osdPopup.osdValue = strategyName
+        osdPopup.visible = true
+        osdPopupTimer.restart()
     }
 
     // ─── Backend ──────────────────────────────────────────────────
@@ -61,6 +92,31 @@ PlasmoidItem {
         acceptedButtons: Qt.LeftButton
 
         onClicked: root.expanded = !root.expanded
+
+        // Scroll wheel: cycle fan strategy
+        // Normalize via wheel.inverted so touchpad & mouse behave consistently.
+        // Traditional scroll up = next strategy (increase).
+        onWheel: function(wheel) {
+            var stratList = backend.strategies
+            if (!backend.online || backend.busy || stratList.length === 0) return
+
+            var idx = stratList.indexOf(backend.currentStrategy)
+            if (idx < 0) return
+
+            var delta = wheel.angleDelta.y
+            if (wheel.inverted) delta = -delta
+
+            if (delta > 0) {
+                idx = Math.min(idx + 1, stratList.length - 1)
+            } else if (delta < 0) {
+                idx = Math.max(idx - 1, 0)
+            }
+
+            if (stratList[idx] !== backend.currentStrategy) {
+                backend.useStrategy(stratList[idx])
+                root.showStrategyOSD(stratList[idx])
+            }
+        }
 
         Kirigami.Icon {
             anchors.fill: parent
