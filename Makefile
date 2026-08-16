@@ -1,5 +1,6 @@
 PLASMOID_ID = org.fw-fanctrl.plasmoid
-SOURCE_DIR = $(shell pwd)
+SOURCE_DIR = $(CURDIR)
+PKG_DIR = $(notdir $(SOURCE_DIR))
 
 # Set RESTART=y to auto-restart Plasma after install/reinstall (default: y)
 RESTART ?= y
@@ -36,13 +37,15 @@ uninstall:
 		rm -rf $(HOME)/.local/share/plasma/plasmoids/$(PLASMOID_ID)
 	@echo "✓ Plasmoid uninstalled."
 
-reinstall: uninstall install
+reinstall:
+	@$(MAKE) uninstall
+	@$(MAKE) install
 
 pack:
 	@echo "Packing $(PLASMOID_ID) for distribution..."
-	@cd .. && tar czf $(PLASMOID_ID).tar.gz $(PLASMOID_ID)/
+	@cd .. && tar --exclude-vcs --exclude='.Rhistory' --exclude='__pycache__' --exclude='*.pyc' -czf $(PLASMOID_ID).tar.gz $(PKG_DIR)/
 	@echo "✓ Packed to ../$(PLASMOID_ID).tar.gz"
 
 clean:
-	@find . -name '*~' -o -name '*.pyc' -o -name '__pycache__' | xargs rm -rf 2>/dev/null || true
+	@find . \( -name '*~' -o -name '*.pyc' -o -name '__pycache__' \) -print0 | xargs -0 -r rm -rf 2>/dev/null || true
 	@echo "✓ Cleaned up temp files."

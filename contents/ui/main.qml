@@ -51,9 +51,14 @@ PlasmoidItem {
         osdPopupTimer.restart()
     }
 
+    property bool statusMessageHidden: false
+
     // ─── Backend ──────────────────────────────────────────────────
     FwBackend {
         id: backend
+        onStrategyApplied: function(name) {
+            root.showStrategyOSD(name)
+        }
     }
 
     // ─── Plasmoid Configuration ───────────────────────────────────
@@ -100,6 +105,8 @@ PlasmoidItem {
             var stratList = backend.strategies
             if (!backend.online || backend.busy || stratList.length === 0) return
 
+            wheel.accepted = true
+
             var idx = stratList.indexOf(backend.currentStrategy)
             if (idx < 0) return
 
@@ -112,10 +119,8 @@ PlasmoidItem {
                 idx = Math.max(idx - 1, 0)
             }
 
-            if (stratList[idx] !== backend.currentStrategy) {
+            if (stratList[idx] !== backend.currentStrategy)
                 backend.useStrategy(stratList[idx])
-                root.showStrategyOSD(stratList[idx])
-            }
         }
 
         Kirigami.Icon {
@@ -179,7 +184,7 @@ PlasmoidItem {
                         Layout.fillWidth: true
                         Layout.minimumWidth: 0
                         from: 0
-                        to: backend.strategies.length - 1
+                        to: Math.max(0, backend.strategies.length - 1)
                         stepSize: 1
                         snapMode: Controls.Slider.SnapAlways
                         enabled: backend.online && backend.strategies.length > 0
@@ -311,6 +316,12 @@ PlasmoidItem {
                         text: tr("Service Control", "服务状态管理")
                     }
                     Item { Layout.fillWidth: true }
+                    Controls.Label {
+                        visible: backend.online && !backend.serviceActive
+                        text: tr("Paused", "已暂停")
+                        opacity: 0.7
+                        font.pointSize: Kirigami.Theme.smallFont.pointSize
+                    }
                     Rectangle {
                         width: Kirigami.Units.smallSpacing
                         height: Kirigami.Units.smallSpacing
@@ -347,14 +358,14 @@ PlasmoidItem {
                     PlasmaComponents3.Button {
                         text: tr("Pause", "暂停")
                         icon.name: "media-playback-pause"
-                        enabled: backend.online && !backend.busy
+                        enabled: backend.online && backend.serviceActive && !backend.busy
                         onClicked: backend.pause()
                     }
 
                     PlasmaComponents3.Button {
                         text: tr("Resume", "恢复")
                         icon.name: "media-playback-start"
-                        enabled: backend.online && !backend.busy
+                        enabled: backend.online && !backend.serviceActive && !backend.busy
                         onClicked: backend.resume()
                     }
 
@@ -387,22 +398,27 @@ PlasmoidItem {
             Layout.leftMargin: Kirigami.Units.smallSpacing
             Layout.rightMargin: Kirigami.Units.smallSpacing
             Layout.bottomMargin: Kirigami.Units.smallSpacing
-            text: backend.lastMessage
-            visible: backend.lastMessage.length > 0
+            text: root.statusMessageHidden ? "" : backend.lastMessage
+            visible: !root.statusMessageHidden && backend.lastMessage.length > 0
             wrapMode: Text.WordWrap
             font.pointSize: Kirigami.Theme.smallFont.pointSize
             color: backend.lastSuccess ? Kirigami.Theme.positiveTextColor : Kirigami.Theme.negativeTextColor
             opacity: visible ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { duration: 200 } }
+        }
 
-            Timer {
-                id: msgTimer
-                interval: 4000
-                onTriggered: {
-                    statusMsg.text = ""
-                    statusMsg.visible = false
-                }
+        Connections {
+            target: backend
+            function onLastMessageChanged() {
+                root.statusMessageHidden = false
+                msgTimer.restart()
             }
+        }
+
+        Timer {
+            id: msgTimer
+            interval: 4000
+            onTriggered: root.statusMessageHidden = true
         }
 
         // ── Loading Indicator ─────────────────────────────────────

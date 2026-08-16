@@ -1,1 +1,5 @@
 fw-fanctrl-plasmoid.code-workspace
+.Rhistory
+__pycache__/
+*.pyc
+*.tar.gz
