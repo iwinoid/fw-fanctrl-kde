@@ -11,7 +11,10 @@
 - **实时状态**：显示当前温度、风扇转速和策略
 - **策略滑条**：快速在静音↔性能之间切换策略
 - **系统托盘集成**：附带悬停在图标上滑动滚轮进行策略切换
-- **配置编辑器**：创建、编辑、重命名、删除策略，配置速度曲线
+- **配置编辑器**：创建、编辑、重命名、删除、拖拽排序策略，配置速度曲线
+- **响应式布局**：编辑器随窗口自适应，长列表在内部滚动
+- **电池策略**：可单独设置电池供电时的策略
+- **安全保存**：保存时由 fw-fanctrl 自动校验并应用
 - **OSD集成**：兼容KDE的OSD
 
 
@@ -33,11 +36,25 @@
 
 ## 安装
 
-### 源码安装
+### 从 Release 安装（普通用户推荐）
+
+1. 从 [Releases](../../releases) 页面下载 `com.github.iwinoid.fw-fanctrl-kde-1.2.tar.xz` 包。
+2. 在 Plasma 中打开 **添加小部件 → 获取新小部件... → 从本地文件安装**，选择下载的 `.tar.xz`。
+3. 或者使用终端安装：
 
 ```bash
-git clone https://github.com/iwinoid/fw-fanctl-kde.git
-cd fw-fanctl-kde
+kpackagetool6 --type=Plasma/Applet --install com.github.iwinoid.fw-fanctrl-kde-1.2.tar.xz
+```
+
+4. 如果小部件没有立即出现，重启 Plasma 即可。
+
+Release 包只包含运行所需文件（`metadata.json`、`contents/`、`scripts/`），体积更小，适合普通用户。
+
+### 源码安装（开发者）
+
+```bash
+git clone https://github.com/iwinoid/fw-fanctrl-kde.git
+cd fw-fanctrl-kde
 make install
 ```
 
@@ -47,13 +64,7 @@ make install
 2. 设置辅助脚本的可执行权限
 3. 自动重启 Plasma
 
-### 手动安装
-
-```bash
-kpackagetool6 --type=Plasma/Applet --install .
-```
-
-然后重启 Plasma：`kquitapp6 plasmashell; plasmashell &`
+源码目录还包含 README、LICENSE、Makefile 和截图；如果你想修改或二次开发，请使用源码安装。
 
 ## 使用
 
@@ -61,7 +72,7 @@ kpackagetool6 --type=Plasma/Applet --install .
 2. 点击托盘图标打开弹出窗口
 3. 拖动滑条切换策略
 4. 右键托盘图标 → **配置** 编辑策略和风扇曲线
-5. 点击 **保存** 应用更改（需输入管理员密码来保存修改）
+5. 点击 **保存**，fw-fanctrl 会自动校验并应用配置
 
 ## 项目结构
 
@@ -82,7 +93,7 @@ fw-fanctrl-kde/
 │   │   ├── 16.png, 32.png, 64.png # 工具栏图标
 │   │   └── offline.png           # 离线状态图标
 │   └── ui/
-│       ├── configCurves.qml      # 配置编辑器界面
+│       ├── configCurves.qml      # 配置编辑器，支持拖拽排序策略
 │       ├── FwBackend.qml         # QML 后端 (DataSource + 轮询定时器)
 │       └── main.qml              # 主界面
 └── image/

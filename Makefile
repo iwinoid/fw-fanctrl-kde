@@ -1,6 +1,7 @@
-PLASMOID_ID = org.fw-fanctrl.plasmoid
+PLASMOID_ID = com.github.iwinoid.fw-fanctrl-kde
 SOURCE_DIR = $(CURDIR)
 PKG_DIR = $(notdir $(SOURCE_DIR))
+VERSION = $(shell sed -n 's/.*"Version": "\([^"]*\)".*/\1/p' metadata.json | head -1)
 
 # Set RESTART=y to auto-restart Plasma after install/reinstall (default: y)
 RESTART ?= y
@@ -24,6 +25,11 @@ install:
 		  mkdir -p $(HOME)/.local/share/plasma/plasmoids/$(PLASMOID_ID) && \
 		  cp -r ./* $(HOME)/.local/share/plasma/plasmoids/$(PLASMOID_ID)/ )
 	@chmod +x $(HOME)/.local/share/plasma/plasmoids/$(PLASMOID_ID)/scripts/fw_helper.py
+	@rm -rf $(HOME)/.local/share/plasma/plasmoids/$(PLASMOID_ID)/README.md \
+	       $(HOME)/.local/share/plasma/plasmoids/$(PLASMOID_ID)/README.zh_CN.md \
+	       $(HOME)/.local/share/plasma/plasmoids/$(PLASMOID_ID)/LICENSE \
+	       $(HOME)/.local/share/plasma/plasmoids/$(PLASMOID_ID)/Makefile \
+	       $(HOME)/.local/share/plasma/plasmoids/$(PLASMOID_ID)/image
 	@echo "✓ $(PLASMOID_ID) installed!"
 	@if [ "$(RESTART)" = "y" ]; then \
 		$(MAKE) restart-plasma; \
@@ -43,8 +49,11 @@ reinstall:
 
 pack:
 	@echo "Packing $(PLASMOID_ID) for distribution..."
-	@cd .. && tar --exclude-vcs --exclude='.Rhistory' --exclude='__pycache__' --exclude='*.pyc' -czf $(PLASMOID_ID).tar.gz $(PKG_DIR)/
-	@echo "✓ Packed to ../$(PLASMOID_ID).tar.gz"
+	@cd .. && tar --exclude-vcs --exclude='.Rhistory' --exclude='__pycache__' --exclude='*.pyc' \
+		--exclude='README.md' --exclude='README.zh_CN.md' --exclude='LICENSE' \
+		--exclude='Makefile' --exclude='image' \
+		-cJf $(PLASMOID_ID)-$(VERSION).tar.xz $(PKG_DIR)/
+	@echo "✓ Packed to ../$(PLASMOID_ID)-$(VERSION).tar.xz"
 
 clean:
 	@find . \( -name '*~' -o -name '*.pyc' -o -name '__pycache__' \) -print0 | xargs -0 -r rm -rf 2>/dev/null || true
