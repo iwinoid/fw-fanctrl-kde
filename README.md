@@ -12,7 +12,10 @@ A vibe coding program, powered with ![DeepSeek V4](https://img.shields.io/badge/
 - **Strategy slider**: Quickly switch between strategies (Silent ↔ Performance)
 - **System tray integration**: Hover and scroll on the tray icon to cycle between strategies
 - **OSD integration**: Compatible with KDE's On-Screen Display for strategy change notifications
-- **Configuration editor**: Create, edit, rename, and delete strategies; configure speed curves
+- **Configuration editor**: Create, edit, rename, delete and drag-to-reorder strategies; configure speed curves
+- **Responsive layout**: The editor adapts to window size, with internal scrolling for long lists
+- **Battery strategy**: Choose a separate strategy while on battery power
+- **Safe saving**: Config is validated and applied by fw-fanctrl automatically
 
 ## Screenshots
 
@@ -32,11 +35,25 @@ A vibe coding program, powered with ![DeepSeek V4](https://img.shields.io/badge/
 
 ## Installation
 
-### From source
+### From Release (recommended for users)
+
+1. Download the `com.github.iwinoid.fw-fanctrl-kde-1.2.tar.xz` package from the [Releases](../../releases) page.
+2. In Plasma, open **Add Widgets → Get New Widgets... → Install from local file**, then select the downloaded `.tar.xz`.
+3. Or install it from a terminal:
 
 ```bash
-git clone https://github.com/iwinoid/fw-fanctl-kde.git
-cd fw-fanctl-kde
+kpackagetool6 --type=Plasma/Applet --install com.github.iwinoid.fw-fanctrl-kde-1.2.tar.xz
+```
+
+4. Restart Plasma if the widget does not appear immediately.
+
+The release package only contains runtime files (`metadata.json`, `contents/`, `scripts/`), so it is smaller and easier for normal users to install.
+
+### From Source (for developers)
+
+```bash
+git clone https://github.com/iwinoid/fw-fanctrl-kde.git
+cd fw-fanctrl-kde
 make install
 ```
 
@@ -46,13 +63,7 @@ This will:
 2. Set executable permissions on the helper script
 3. Restart Plasma shell automatically
 
-### Manual
-
-```bash
-kpackagetool6 --type=Plasma/Applet --install .
-```
-
-Then restart Plasma: `kquitapp6 plasmashell; plasmashell &`
+The source tree also contains README, LICENSE, Makefile and screenshots; use this method if you want to modify or develop the widget.
 
 ## Usage
 
@@ -60,7 +71,7 @@ Then restart Plasma: `kquitapp6 plasmashell; plasmashell &`
 2. Click the tray icon to open the popup
 3. Drag the slider to switch strategy
 4. Right-click the tray icon → **Configure** to edit strategies and fan curves
-5. Click **Save** to apply changes (requires admin password via `pkexec`)
+5. Click **Save** — fw-fanctrl validates and applies the configuration automatically
 
 ## Project Structure
 
@@ -81,7 +92,7 @@ fw-fanctrl-kde/
 │   │   ├── 16.png, 32.png, 64.png # Toolbar icons
 │   │   └── offline.png           # Offline state icon
 │   └── ui/
-│       ├── configCurves.qml      # Configuration editor UI
+│       ├── configCurves.qml      # Config editor with drag-and-drop strategy reordering
 │       ├── FwBackend.qml         # QML backend (DataSource + poll timer)
 │       └── main.qml              # Main plasmoid UI
 └── image/
