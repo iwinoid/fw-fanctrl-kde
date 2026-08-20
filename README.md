@@ -37,12 +37,12 @@ A vibe coding program, powered with ![DeepSeek V4](https://img.shields.io/badge/
 
 ### From Release (recommended for users)
 
-1. Download the `com.github.iwinoid.fw-fanctrl-kde-1.2.tar.xz` package from the [Releases](../../releases) page.
+1. Download the `com.github.iwinoid.fw-fanctrl-kde-1.2.1.tar.xz` package from the [Releases](../../releases) page.
 2. In Plasma, open **Add Widgets → Get New Widgets... → Install from local file**, then select the downloaded `.tar.xz`.
 3. Or install it from a terminal:
 
 ```bash
-kpackagetool6 --type=Plasma/Applet --install com.github.iwinoid.fw-fanctrl-kde-1.2.tar.xz
+kpackagetool6 --type=Plasma/Applet --install com.github.iwinoid.fw-fanctrl-kde-1.2.1.tar.xz
 ```
 
 4. Restart Plasma if the widget does not appear immediately.
