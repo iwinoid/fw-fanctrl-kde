@@ -212,9 +212,14 @@ Item {
         if (JSON.stringify(sorted) === JSON.stringify(pts))
             return
 
+        // sortPoints returns a new array but the SAME point objects as `pts`.
+        // Snapshot the sorted values first, then write them back, otherwise the
+        // in-place copy would read already-overwritten objects (aliasing) and
+        // corrupt the curve into duplicate temperature points.
+        var values = sorted.map(function(p) { return { temp: p.temp, speed: p.speed } })
         for (var i = 0; i < pts.length; i++) {
-            pts[i].temp = sorted[i].temp
-            pts[i].speed = sorted[i].speed
+            pts[i].temp = values[i].temp
+            pts[i].speed = values[i].speed
         }
         curveVersion++
     }

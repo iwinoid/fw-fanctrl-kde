@@ -38,12 +38,12 @@
 
 ### 从 Release 安装（普通用户推荐）
 
-1. 从 [Releases](../../releases) 页面下载 `com.github.iwinoid.fw-fanctrl-kde-1.2.tar.xz` 包。
+1. 从 [Releases](../../releases) 页面下载 `com.github.iwinoid.fw-fanctrl-kde-1.2.1.tar.xz` 包。
 2. 在 Plasma 中打开 **添加小部件 → 获取新小部件... → 从本地文件安装**，选择下载的 `.tar.xz`。
 3. 或者使用终端安装：
 
 ```bash
-kpackagetool6 --type=Plasma/Applet --install com.github.iwinoid.fw-fanctrl-kde-1.2.tar.xz
+kpackagetool6 --type=Plasma/Applet --install com.github.iwinoid.fw-fanctrl-kde-1.2.1.tar.xz
 ```
 
 4. 如果小部件没有立即出现，重启 Plasma 即可。
