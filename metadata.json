@@ -7,7 +7,7 @@
         "Description": "Control Framework laptop fan strategies on KDE Plasma 6",
         "Description[zh_CN]": "在 KDE Plasma 6 上控制 Framework 笔记本电脑的风扇策略",
         "Icon": "computer-fan",
-        "Version": "1.2.2",
+        "Version": "1.2.3",
         "License": "GPL-3.0-or-later",
         "Authors": [
             {
