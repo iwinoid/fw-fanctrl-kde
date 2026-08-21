@@ -51,7 +51,8 @@ pack:
 	@echo "Packing $(PLASMOID_ID) for distribution..."
 	@cd .. && tar --exclude-vcs --exclude='.Rhistory' --exclude='__pycache__' --exclude='*.pyc' \
 		--exclude='README.md' --exclude='README.zh_CN.md' --exclude='LICENSE' \
-		--exclude='Makefile' --exclude='image' \
+		--exclude='Makefile' --exclude='image' --exclude='tests' \
+		--exclude='.qmllint.ini' --exclude='.gitignore' \
 		-cJf $(PLASMOID_ID)-$(VERSION).tar.xz $(PKG_DIR)/
 	@echo "✓ Packed to ../$(PLASMOID_ID)-$(VERSION).tar.xz"
 

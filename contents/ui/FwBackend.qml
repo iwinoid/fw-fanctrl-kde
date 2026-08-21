@@ -1,5 +1,4 @@
 import QtQuick
-import org.kde.plasma.plasmoid
 import org.kde.plasma.plasma5support
 
 /**
@@ -100,11 +99,11 @@ Item {
             disconnectSource(sourceName)
 
             if (command === "get_status")
-                handleStatus(stdout, stderr, exitCode)
+                root.handleStatus(stdout, stderr, exitCode)
             else if (command === "notify")
                 {} // fire-and-forget, result is ignored
             else
-                handleResult(command, stdout, stderr, exitCode)
+                root.handleResult(command, stdout, stderr, exitCode)
         }
     }
 
