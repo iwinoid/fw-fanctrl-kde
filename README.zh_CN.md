@@ -49,10 +49,12 @@
 
 ### 依赖
 
-- 带 Chrome-EC 的笔记本，Linux系统，比如 Chromebook 和 Framework 笔记本。在 HP Elite Dragonfly Chromebook 上测试过。
+- Linux 内核 ≥ 6.11，带 Chrome-EC 的笔记本，比如 Chromebook 和 Framework 笔记本。在 HP Elite Dragonfly Chromebook 上测试过。
 - KDE Plasma 6
-- Python 3
+- Python ≥ 3.12
 - [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl)，已安装并运行。服务拥有 `/etc/fw-fanctrl/config.json`。
+
+内核和 Python 的最低版本要求沿用 fw-fanctrl。
 
 ### 从 Release 安装
 
