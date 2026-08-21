@@ -19,7 +19,7 @@
 
 |               弹出窗口               |             配置编辑器             |
 | :----------------------------------: | :--------------------------------: |
-| ![主窗口](image/README/mainwindow.png) | ![配置编辑器](image/README/conf.png) |
+| ![主窗口](image/README/mainwindow_cn.png) | ![配置编辑器](image/README/conf_cn.png) |
 
 ## 目录
 
