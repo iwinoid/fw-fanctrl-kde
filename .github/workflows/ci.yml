@@ -12,25 +12,24 @@ jobs:
     container: docker.io/archlinux:latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install QML toolchain
-        run: pacman -Syu --noconfirm git qt6-declarative kirigami plasma-framework
+        # kirigami resolves org.kde.kirigami types. Plasma runtime QML modules
+        # (plasmoid, plasma5support, workspace.osd) are not available outside a
+        # Plasma session; their import warnings are tolerated below.
+        run: pacman -Syu --noconfirm git qt6-declarative kirigami
 
       - name: qmllint
-        # Tolerate only environment warnings (Plasma runtime QML modules that
-        # cannot be resolved outside a real Plasma session). Anything else
-        # must be zero.
+        # Tolerate only environment warnings (unresolvable Plasma runtime QML
+        # modules and the like). Any real code problem must fail the job.
         run: |
           set -euo pipefail
           /usr/lib/qt6/bin/qmllint \
             contents/ui/main.qml contents/ui/FwBackend.qml contents/ui/configCurves.qml \
             > /tmp/lint.log 2>&1 || true
           grep -E "^(Warning|Error)" /tmp/lint.log \
-            | grep -v "was not found" \
-            | grep -v "is not resolved" \
-            | grep -v "is not installed" \
-            | grep -v "not found in any" \
+            | grep -viE "(was not found|is not resolved|is not installed|not found in any|no qualifying module|import failure)" \
             > /tmp/real.log || true
           if [ -s /tmp/real.log ]; then
             echo "qmllint found real problems:"
@@ -44,7 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Compile backend
         run: python3 -m py_compile scripts/fw_helper.py
@@ -56,16 +55,20 @@ jobs:
         run: make pack
 
       - name: Verify package contents
+        # Note: avoid `tar | grep -q` under `set -o pipefail` — grep -q closes
+        # the pipe early, tar dies with SIGPIPE, and pipefail turns that into a
+        # failure even on a successful match. Read the listing into a file first.
         run: |
           set -euo pipefail
           pkg="$(ls ../com.github.iwinoid.fw-fanctrl-kde-*.tar.xz)"
           echo "package: $pkg ($(du -h "$pkg" | cut -f1))"
-          tar -tf "$pkg" | grep -q "fw-fanctrl-kde/metadata.json"      || { echo "metadata.json missing"; exit 1; }
-          tar -tf "$pkg" | grep -q "fw-fanctrl-kde/contents/ui/main.qml" || { echo "main.qml missing"; exit 1; }
-          tar -tf "$pkg" | grep -q "fw-fanctrl-kde/scripts/fw_helper.py" || { echo "fw_helper.py missing"; exit 1; }
-          if tar -tf "$pkg" | grep -qE "(^|/)tests?/|\.qmllint\.ini"; then
+          tar -tf "$pkg" > /tmp/pkglist
+          grep -q "fw-fanctrl-kde/metadata.json"      /tmp/pkglist || { echo "metadata.json missing"; exit 1; }
+          grep -q "fw-fanctrl-kde/contents/ui/main.qml" /tmp/pkglist || { echo "main.qml missing"; exit 1; }
+          grep -q "fw-fanctrl-kde/scripts/fw_helper.py" /tmp/pkglist || { echo "fw_helper.py missing"; exit 1; }
+          if grep -qE "(^|/)tests?/|\.qmllint\.ini|\.github/|pkglist" /tmp/pkglist; then
             echo "dev-only files leaked into the release package"
-            tar -tf "$pkg" | grep -E "(^|/)tests?/|\.qmllint\.ini"
+            grep -E "(^|/)tests?/|\.qmllint\.ini|\.github/|pkglist" /tmp/pkglist
             exit 1
           fi
           echo "package contents OK"
