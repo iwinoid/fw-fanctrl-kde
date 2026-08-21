@@ -42,6 +42,8 @@
 
 笔记本在 Linux 上控制风扇，通常要靠命令行工具。fw-fanctrl 读取 `/etc/fw-fanctrl/config.json`，按每个策略的速度曲线驱动 Chrome-EC 风扇。本项目给 fw-fanctrl 提供 Plasma 6 界面。托盘小部件看状态、切策略。图形编辑器调策略和曲线。
 
+由 DeepSeek V4 经 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 开发。
+
 ## 安装
 
 ### 依赖
@@ -147,7 +149,6 @@ QML (小组件界面)  ──executable DataSource──▶  scripts/fw_helper.p
 
 - [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl)，GPL-2.0
 - [waicool20/fw-fanctrl-ui](https://github.com/waicool20/fw-fanctrl-ui)，后端设计参考
-- 由 DeepSeek V4 经 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 开发
 
 ## 贡献
 

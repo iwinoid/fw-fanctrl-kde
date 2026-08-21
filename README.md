@@ -40,6 +40,8 @@ A KDE Plasma 6 widget for Framework laptops and other Chrome-EC machines. It wra
 
 Linux laptop fan control usually needs manual tooling. fw-fanctrl reads a JSON configuration from `/etc/fw-fanctrl/config.json` and drives Chrome-EC fans through speed curves, one per strategy. This project gives fw-fanctrl a Plasma 6 interface: a tray widget for status and switching, and a graphical editor for strategies and curves.
 
+Developed by DeepSeek V4 via [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness).
+
 ## Install
 
 ### Dependencies
@@ -144,7 +146,6 @@ The backend exposes these commands. Each one prints a single JSON object on stdo
 
 - [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl), GPL-2.0
 - [waicool20/fw-fanctrl-ui](https://github.com/waicool20/fw-fanctrl-ui), backend design reference
-- Developed by DeepSeek V4 via [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
 
 ## Contributing
 
