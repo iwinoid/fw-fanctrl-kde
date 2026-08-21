@@ -44,7 +44,7 @@ Linux laptop fan control usually needs manual tooling. fw-fanctrl reads a JSON c
 
 ### Dependencies
 
-- Linux on a laptop with Chrome EC. Framework laptops work; tested on an HP Elite Dragonfly Chromebook.
+- Linux on a laptop with Chrome EC, such as Chromebooks and Framework Laptops; tested on an HP Elite Dragonfly Chromebook.
 - KDE Plasma 6
 - Python 3
 - [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl), installed and running. The service owns `/etc/fw-fanctrl/config.json`.
@@ -143,10 +143,7 @@ The backend exposes these commands. Each one prints a single JSON object on stdo
 ## Thanks
 
 - [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl), GPL-2.0
-- [KDE Plasma & Kirigami](https://kde.org), LGPL-2.0+
-- [Qt 6](https://qt.io), LGPL-3.0 / GPL-2.0
-- [waicool20/fw-fanctrl-ui](https://github.com/waicool20/fw-fanctrl-ui), design reference
-- Built with DeepSeek V4 through [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
+- [waicool20/fw-fanctrl-ui](https://github.com/waicool20/fw-fanctrl-ui), backend design reference
 
 ## Contributing
 
