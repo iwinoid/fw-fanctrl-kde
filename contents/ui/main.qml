@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
@@ -18,7 +19,7 @@ PlasmoidItem {
     readonly property bool isChinese: Qt.locale().name.startsWith("zh")
 
     function tr(en, zh) {
-        return isChinese ? zh : en
+        return isChinese ? zh : en;
     }
 
     // ─── OSD Popup (official KDE OsdWindow + OsdItem) ─────────────
@@ -30,8 +31,8 @@ PlasmoidItem {
         property alias icon: osdContent.icon
         property alias showingProgress: osdContent.showingProgress
 
-        width: Math.max(Math.min(Screen.desktopAvailableWidth / 2, mainItem.implicitWidth), Kirigami.Units.gridUnit * 15) + leftPadding + rightPadding
-        height: mainItem.implicitHeight + topPadding + bottomPadding
+        width: Math.max(Math.min(Screen.desktopAvailableWidth / 2, osdPopup.mainItem.implicitWidth), Kirigami.Units.gridUnit * 15) + osdPopup.leftPadding + osdPopup.rightPadding
+        height: osdPopup.mainItem.implicitHeight + osdPopup.topPadding + osdPopup.bottomPadding
 
         mainItem: OsdItem {
             id: osdContent
@@ -46,9 +47,9 @@ PlasmoidItem {
     }
 
     function showStrategyOSD(strategyName) {
-        osdPopup.osdValue = strategyName
-        osdPopup.visible = true
-        osdPopupTimer.restart()
+        osdPopup.osdValue = strategyName;
+        osdPopup.visible = true;
+        osdPopupTimer.restart();
     }
 
     property bool statusMessageHidden: false
@@ -56,11 +57,11 @@ PlasmoidItem {
     // ─── Backend ──────────────────────────────────────────────────
     FwBackend {
         id: backend
-        onStrategyApplied: function(name) {
-            root.showStrategyOSD(name)
+        onStrategyApplied: function (name) {
+            root.showStrategyOSD(name);
         }
-        onServiceOfflineNotice: function(reason) {
-            backend.notify(root.tr("fw-fanctrl is unavailable", "fw-fanctrl 不可用"), reason)
+        onServiceOfflineNotice: function (reason) {
+            backend.notify(root.tr("fw-fanctrl is unavailable", "fw-fanctrl 不可用"), reason);
         }
     }
 
@@ -68,24 +69,18 @@ PlasmoidItem {
     readonly property string widgetIcon: Qt.resolvedUrl("../images/fan.svg")
 
     Plasmoid.icon: widgetIcon
-    Plasmoid.status: backend.online
-        ? PlasmaCore.Types.ActiveStatus
-        : PlasmaCore.Types.PassiveStatus
+    Plasmoid.status: backend.online ? PlasmaCore.Types.ActiveStatus : PlasmaCore.Types.PassiveStatus
 
     toolTipItem: ColumnLayout {
         spacing: Kirigami.Units.smallSpacing
 
         Controls.Label {
-            text: backend.online
-                ? tr("Fan: %1", "风扇: %1").arg(backend.currentStrategy || tr("unknown", "未知"))
-                : tr("Fan: offline", "风扇: 离线")
+            text: backend.online ? root.tr("Fan: %1", "风扇: %1").arg(backend.currentStrategy || root.tr("unknown", "未知")) : root.tr("Fan: offline", "风扇: 离线")
             font.bold: true
         }
 
         Controls.Label {
-            text: backend.online
-                ? tr("%1°C · %2%", "%1°C · %2%").arg(backend.temperature.toFixed(1)).arg(backend.fanSpeed)
-                : ""
+            text: backend.online ? root.tr("%1°C · %2%", "%1°C · %2%").arg(backend.temperature.toFixed(1)).arg(backend.fanSpeed) : ""
             opacity: 0.7
             visible: backend.online
         }
@@ -103,26 +98,27 @@ PlasmoidItem {
         // Scroll wheel: cycle fan strategy
         // Normalize via wheel.inverted so touchpad & mouse behave consistently.
         // Traditional scroll up = next strategy (increase).
-        onWheel: function(wheel) {
-            var stratList = backend.strategies
-            if (!backend.online || backend.busy || stratList.length === 0) return
+        onWheel: function (wheel) {
+            var stratList = backend.strategies;
+            if (!backend.online || backend.busy || stratList.length === 0)
+                return;
+            wheel.accepted = true;
 
-            wheel.accepted = true
-
-            var idx = stratList.indexOf(backend.currentStrategy)
-            if (idx < 0) return
-
-            var delta = wheel.angleDelta.y
-            if (wheel.inverted) delta = -delta
+            var idx = stratList.indexOf(backend.currentStrategy);
+            if (idx < 0)
+                return;
+            var delta = wheel.angleDelta.y;
+            if (wheel.inverted)
+                delta = -delta;
 
             if (delta > 0) {
-                idx = Math.min(idx + 1, stratList.length - 1)
+                idx = Math.min(idx + 1, stratList.length - 1);
             } else if (delta < 0) {
-                idx = Math.max(idx - 1, 0)
+                idx = Math.max(idx - 1, 0);
             }
 
             if (stratList[idx] !== backend.currentStrategy)
-                backend.useStrategy(stratList[idx])
+                backend.useStrategy(stratList[idx]);
         }
 
         Kirigami.Icon {
@@ -169,9 +165,11 @@ PlasmoidItem {
                 RowLayout {
                     Layout.fillWidth: true
                     Controls.Label {
-                        text: tr("Fan Strategy", "风扇调度方案")
+                        text: root.tr("Fan Strategy", "风扇调度方案")
                     }
-                    Item { Layout.fillWidth: true }
+                    Item {
+                        Layout.fillWidth: true
+                    }
                     Controls.Label {
                         text: backend.currentStrategy || ""
                         font.bold: true
@@ -192,14 +190,14 @@ PlasmoidItem {
                         snapMode: Controls.Slider.SnapAlways
                         enabled: backend.online && backend.strategies.length > 0
                         value: {
-                            var idx = backend.strategies.indexOf(backend.currentStrategy)
-                            return idx >= 0 ? idx : 0
+                            var idx = backend.strategies.indexOf(backend.currentStrategy);
+                            return idx >= 0 ? idx : 0;
                         }
 
                         onMoved: {
-                            var idx = Math.round(value)
+                            var idx = Math.round(value);
                             if (idx >= 0 && idx < backend.strategies.length) {
-                                backend.useStrategy(backend.strategies[idx])
+                                backend.useStrategy(backend.strategies[idx]);
                             }
                         }
                     }
@@ -215,7 +213,9 @@ PlasmoidItem {
                         Layout.preferredHeight: Kirigami.Units.iconSizes.smallMedium
                         opacity: 0.8
                     }
-                    Item { Layout.fillWidth: true }
+                    Item {
+                        Layout.fillWidth: true
+                    }
                     Kirigami.Icon {
                         source: "battery-profile-performance"
                         Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium
@@ -255,11 +255,13 @@ PlasmoidItem {
                 RowLayout {
                     Layout.fillWidth: true
                     Controls.Label {
-                        text: tr("Fan Speed", "风扇功率")
+                        text: root.tr("Fan Speed", "风扇功率")
                     }
-                    Item { Layout.fillWidth: true }
+                    Item {
+                        Layout.fillWidth: true
+                    }
                     Controls.Label {
-                        text: tr("%1%", "%1%").arg(backend.fanSpeed)
+                        text: root.tr("%1%", "%1%").arg(backend.fanSpeed)
                         font.bold: true
                     }
                 }
@@ -276,13 +278,15 @@ PlasmoidItem {
                 RowLayout {
                     Layout.fillWidth: true
                     Controls.Label {
-                        text: tr("Temperature", "温度")
+                        text: root.tr("Temperature", "温度")
                         font.pointSize: Kirigami.Theme.smallFont.pointSize
                         opacity: 0.7
                     }
-                    Item { Layout.fillWidth: true }
+                    Item {
+                        Layout.fillWidth: true
+                    }
                     Controls.Label {
-                        text: tr("%1°C", "%1°C").arg(backend.temperature.toFixed(1))
+                        text: root.tr("%1°C", "%1°C").arg(backend.temperature.toFixed(1))
                         font.pointSize: Kirigami.Theme.smallFont.pointSize
                         opacity: 0.7
                     }
@@ -317,12 +321,14 @@ PlasmoidItem {
                 RowLayout {
                     Layout.fillWidth: true
                     Controls.Label {
-                        text: tr("Service Control", "服务状态管理")
+                        text: root.tr("Service Control", "服务状态管理")
                     }
-                    Item { Layout.fillWidth: true }
+                    Item {
+                        Layout.fillWidth: true
+                    }
                     Controls.Label {
                         visible: backend.online && !backend.serviceActive
-                        text: tr("Paused", "已暂停")
+                        text: root.tr("Paused", "已暂停")
                         opacity: 0.7
                         font.pointSize: Kirigami.Theme.smallFont.pointSize
                     }
@@ -353,28 +359,28 @@ PlasmoidItem {
                     spacing: Kirigami.Units.smallSpacing
 
                     PlasmaComponents3.Button {
-                        text: tr("Reload", "重载")
+                        text: root.tr("Reload", "重载")
                         icon.name: "view-refresh"
                         enabled: backend.online && !backend.busy
                         onClicked: backend.reload()
                     }
 
                     PlasmaComponents3.Button {
-                        text: tr("Pause", "暂停")
+                        text: root.tr("Pause", "暂停")
                         icon.name: "media-playback-pause"
                         enabled: backend.online && backend.serviceActive && !backend.busy
                         onClicked: backend.pause()
                     }
 
                     PlasmaComponents3.Button {
-                        text: tr("Resume", "恢复")
+                        text: root.tr("Resume", "恢复")
                         icon.name: "media-playback-start"
                         enabled: backend.online && !backend.serviceActive && !backend.busy
                         onClicked: backend.resume()
                     }
 
                     PlasmaComponents3.Button {
-                        text: tr("Refresh", "刷新")
+                        text: root.tr("Refresh", "刷新")
                         icon.name: "view-refresh"
                         enabled: !backend.busy
                         onClicked: backend.refresh()
@@ -388,7 +394,7 @@ PlasmoidItem {
             Layout.fillWidth: true
             Layout.leftMargin: Kirigami.Units.smallSpacing
             Layout.rightMargin: Kirigami.Units.smallSpacing
-            text: backend.online ? "" : tr("● fw-fanctrl unavailable", "● fw-fanctrl 不可用")
+            text: backend.online ? "" : root.tr("● fw-fanctrl unavailable", "● fw-fanctrl 不可用")
             visible: !backend.online
             wrapMode: Text.WordWrap
             color: Kirigami.Theme.negativeTextColor
@@ -408,14 +414,18 @@ PlasmoidItem {
             font.pointSize: Kirigami.Theme.smallFont.pointSize
             color: backend.lastSuccess ? Kirigami.Theme.positiveTextColor : Kirigami.Theme.negativeTextColor
             opacity: visible ? 1.0 : 0.0
-            Behavior on opacity { NumberAnimation { duration: 200 } }
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 200
+                }
+            }
         }
 
         Connections {
             target: backend
             function onLastMessageChanged() {
-                root.statusMessageHidden = false
-                msgTimer.restart()
+                root.statusMessageHidden = false;
+                msgTimer.restart();
             }
         }
 
