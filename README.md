@@ -1,55 +1,67 @@
-# Fan Control UI for Plasma
+# Fan Control UI for Plasma _(fw-fanctrl-kde)_
 
-> **[中文版](README.zh_CN.md)**
+[简体中文](README.zh_CN.md)
 
-A KDE Plasma 6 plasmoid for controlling **fw-fanctrl** fan strategies on Framework laptops (or other  laptops with Chrome EC). My laptop is HP Elite Dragonfly Chromebook. 
+[![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
+[![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)](https://spdx.org/licenses/GPL-3.0-or-later.html)
+[![powered by DeepSeek](https://img.shields.io/badge/powered_by-DeepSeek-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://deepseek.com)
+[![powered by dsh](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)
+[![Platform: Linux](https://img.shields.io/badge/Platform-Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)](https://www.linux.org/)
+[![KDE Plasma 6](https://img.shields.io/badge/KDE_Plasma-6-1D99F3?style=for-the-badge&logo=kde&logoColor=white)](https://kde.org/plasma-desktop)
+[![Python 3](https://img.shields.io/badge/Python-3-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 
-A vibe coding program, powered with ![DeepSeek V4](https://img.shields.io/badge/DeepSeek%20V4-1477D1?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMjMuNzQ4IDQuNjUxYy0uMjU0LS4xMjQtLjM2NC4xMTMtLjUxMi4yMzMtLjA1MS4wNC0uMDk0LjA5LS4xMzcuMTM3LS4zNzIuMzk3LS44MDYuNjU3LTEuMzczLjYyNi0uODI5LS4wNDYtMS41MzcuMjE0LTIuMTYzLjg0OC0uMTMzLS43ODItLjU3NS0xLjI0OC0xLjI0Ny0xLjU0OC0uMzUyLS4xNTUtLjcwOC0uMzExLS45NTUtLjY1LS4xNzItLjI0LS4yMTktLjUwOS0uMzA1LS43NzQtLjA1NS0uMTYtLjExLS4zMjMtLjI5My0uMzUtLjItLjAzMS0uMjc4LjEzNi0uMzU2LjI3Ni0uMzEzLjU3Mi0uNDM0IDEuMjAyLS40MjIgMS44NC4wMjcgMS40MzYuNjMzIDIuNTggMS44MzggMy4zOTMuMTM3LjA5NC4xNzIuMTg3LjEyOS4zMjMtLjA4Mi4yOC0uMTguNTUzLS4yNjYuODMzLS4wNTUuMTc5LS4xMzcuMjE4LS4zMjguMTRhNS41IDUuNSAwIDAgMS0xLjczNy0xLjE3OWMtLjg1Ny0uODI4LTEuNjMxLTEuNzQzLTIuNTk3LTIuNDZhMTIgMTIgMCAwIDAtLjY4OS0uNDdjLS45ODUtLjk1Ny4xMy0xLjc0My4zODctMS44MzYuMjctLjA5OC4wOTQtLjQzMy0uNzc4LS40MjgtLjg3Mi4wMDMtMS42Ny4yOTUtMi42ODcuNjg1YTMgMyAwIDAgMS0uNDY1LjEzNiA5LjYgOS42IDAgMCAwLTIuODgzLS4xMDFjLTEuODg1LjIxLTMuMzkgMS4xLTQuNDk3IDIuNjIyQy4wODIgOC43NzYtLjIzMSAxMC44NTQuMTUyIDEzLjAyYy40MDMgMi4yODQgMS41NjggNC4xNzUgMy4zNiA1LjY1MyAxLjg1NyAxLjUzMyAzLjk5NyAyLjI4NCA2LjQzOCAyLjE0IDEuNDgyLS4wODUgMy4xMzItLjI4NCA0Ljk5NC0xLjg2LjQ3LjIzNC45NjIuMzI4IDEuNzguMzk4LjYyOS4wNTggMS4yMzUtLjAzMSAxLjcwNS0uMTI5LjczNS0uMTU1LjY4NC0uODM2LjQxOC0uOTYxLTIuMTU1LTEuMDA0LTEuNjgyLS41OTUtMi4xMTItLjkyNiAxLjA5NS0xLjI5NSAyLjc2OC0zLjU5OCAzLjI4NC02LjczMy4wNS0uMzQ2LjExNS0uODM0LjEwOC0xLjExNC0uMDA0LS4xNzEuMDM1LS4yMzguMjMtLjI1N2E0LjIgNC4yIDAgMCAwIDEuNTQ1LS40NzVjMS4zOTctLjc2MyAxLjk2LTIuMDE2IDIuMDkzLTMuNTE3LjAyLS4yMy0uMDA0LS40NjctLjI0Ny0uNTg4TTExLjU4IDE4LjE2OGMtMi4wODgtMS42NDItMy4xMDEtMi4xODMtMy41Mi0yLjE2LS4zOS4wMjQtLjMyLjQ3Mi0uMjM0Ljc2My4wOS4yODguMjA3LjQ4Ny4zNzEuNzQuMTE0LjE2Ny4xOTIuNDE2LS4xMTMuNjAzLS42NzMuNDE2LTEuODQyLS4xNC0xLjg5Ny0uMTY4LTEuMzYxLS44MDEtMi41LTEuODYtMy4zMDEtMy4zMDYtLjc3NS0xLjM5My0xLjIyNS0yLjg4OC0xLjI5OS00LjQ4Mi0uMDItLjM4NS4wOTQtLjUyMi40NzctLjU5MmE0LjcgNC43IDAgMCAxIDEuNTMtLjAzOGMyLjEzMS4zMTEgMy45NDYgMS4yNjQgNS40NjcgMi43NzQuODY4Ljg2IDEuNTI1IDEuODg3IDIuMjAyIDIuODkuNzIgMS4wNjYgMS40OTQgMi4wODIgMi40OCAyLjkxNS4zNDguMjkxLjYyNi41MTMuODkyLjY3Ny0uODAyLjA5LTIuMTQuMTA5LTMuMDU1LS42MTV6bTEuMDAxLTYuNDRhLjMwNi4zMDYgMCAwIDEgLjQxNS0uMjg3LjMuMyAwIDAgMSAuMTEzLjA3NC4zLjMgMCAwIDEgLjA4Ni4yMTRjMCAuMTctLjEzNi4zMDctLjMwOC4zMDdhLjMwMy4zMDMgMCAwIDEtLjMwNi0uMzA3bTMuMTEgMS41OTZjLS4yLjA4MS0uNC4xNTEtLjU5MS4xNmExLjI1IDEuMjUgMCAwIDEtLjc5OC0uMjU0Yy0uMjc0LS4yMy0uNDctLjM1OC0uNTUxLS43NThhMS43IDEuNyAwIDAgMSAuMDE1LS41ODhjLjA3LS4zMjctLjAwNy0uNTM3LS4yMzgtLjcyNy0uMTg4LS4xNTYtLjQyNi0uMTk5LS42ODktLjE5OWEuNi42IDAgMCAxLS4yNTQtLjA3OC4yNTMuMjUzIDAgMCAxLS4xMTQtLjM1OCAxIDEgMCAwIDEgLjE5Mi0uMjFjLjM1Ni0uMjAyLjc2Ny0uMTM2IDEuMTQ2LjAxNi4zNTIuMTQ0LjYxOC40MDggMS4wMDEuNzgyLjM5Mi40NTEuNDYyLjU3Ni42ODUuOTE1LjE3Ni4yNjQuMzM2LjUzNi40NDYuODQ4LjA2Ni4xOTQtLjAyLjM1My0uMjUuNDUiLz48L3N2Zz4=&logoColor=white)
+Control Framework laptop fan strategies on KDE Plasma 6
 
-## Features
+A KDE Plasma 6 widget for Framework laptops and other Chrome-EC machines. It wraps the fw-fanctrl fan-control service in a GUI. You can watch temperature and fan speed, switch strategies, and tune speed curves without the terminal. fw-fanctrl validates and applies the configuration when you save.
 
-- **Real-time status**: Displays current temperature, fan speed, and active strategy
-- **Strategy slider**: Quickly switch between strategies (Silent ↔ Performance)
-- **System tray integration**: Hover and scroll on the tray icon to cycle between strategies
-- **OSD integration**: Compatible with KDE's On-Screen Display for strategy change notifications
-- **Configuration editor**: Create, edit, rename, delete and drag-to-reorder strategies; configure speed curves
-- **Responsive layout**: The editor adapts to window size, with internal scrolling for long lists
-- **Battery strategy**: Choose a separate strategy while on battery power
-- **Safe saving**: Config is validated and applied by fw-fanctrl automatically
+The project has three parts: a Python backend that wraps the fw-fanctrl CLI, a tray widget frontend, and a graphical config editor.
 
-## Screenshots
+## Table of Contents
 
-|                 Popup UI                 |         Configuration Editor         |
-| :---------------------------------------: | :-----------------------------------: |
-| ![Main Window](image/README/mainwindow.png) | ![Config Editor](image/README/conf.png) |
+- [Background](#background)
+- [Install](#install)
+  - [Dependencies](#dependencies)
+  - [From Release](#from-release)
+  - [From Source](#from-source)
+  - [Uninstall](#uninstall)
+- [Usage](#usage)
+- [Features](#features)
+- [Architecture](#architecture)
+- [API](#api)
+- [Maintainers](#maintainers)
+- [Thanks](#thanks)
+- [Contributing](#contributing)
+- [Changelog](#changelog)
+- [License](#license)
 
-## Requirements
+## Background
 
-![Linux](https://img.shields.io/badge/Platform-Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black) (Tested on ![Arch](https://img.shields.io/badge/-Arch_Linux-1793D1?style=for-the-badge&logo=archlinux&logoColor=white))
+Linux laptop fan control usually needs manual tooling. fw-fanctrl reads a JSON configuration from `/etc/fw-fanctrl/config.json` and drives Chrome-EC fans through speed curves, one per strategy. This project gives fw-fanctrl a Plasma 6 interface: a tray widget for status and switching, and a graphical editor for strategies and curves.
 
-![KDE Plasma](https://img.shields.io/badge/KDE_Plasma-1D99F3?style=for-the-badge&logo=kde&logoColor=white)
+This is a vibe-coding project, built with DeepSeek V4 and [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness). Its design is referenced from [waicool20/fw-fanctrl-ui](https://github.com/waicool20/fw-fanctrl-ui).
 
-![Python 3](https://img.shields.io/badge/Python%203-3776AB?style=for-the-badge&logo=python&logoColor=white)
+## Install
 
-**fw-fanctrl** — [TamtamHero/fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl)
+### Dependencies
 
-## Installation
+- Linux on a laptop with Chrome EC. Framework laptops work; tested on an HP Elite Dragonfly Chromebook.
+- KDE Plasma 6
+- Python 3
+- [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl), installed and running. The service owns `/etc/fw-fanctrl/config.json`.
 
-### From Release (recommended for users)
+### From Release
 
-1. Download the `com.github.iwinoid.fw-fanctrl-kde-1.2.1.tar.xz` package from the [Releases](../../releases) page.
-2. In Plasma, open **Add Widgets → Get New Widgets... → Install from local file**, then select the downloaded `.tar.xz`.
-3. Or install it from a terminal:
+1. Download `com.github.iwinoid.fw-fanctrl-kde-1.2.1.tar.xz` from the [Releases](https://github.com/iwinoid/fw-fanctrl-kde/releases) page.
+2. In Plasma, open **Add Widgets → Get New Widgets... → Install from local file** and select the package.
+3. Or install from a terminal:
 
 ```bash
 kpackagetool6 --type=Plasma/Applet --install com.github.iwinoid.fw-fanctrl-kde-1.2.1.tar.xz
 ```
 
-4. Restart Plasma if the widget does not appear immediately.
+The release package contains only runtime files (`metadata.json`, `contents/`, `scripts/`), so it is smaller.
 
-The release package only contains runtime files (`metadata.json`, `contents/`, `scripts/`), so it is smaller and easier for normal users to install.
-
-### From Source (for developers)
+### From Source
 
 ```bash
 git clone https://github.com/iwinoid/fw-fanctrl-kde.git
@@ -57,55 +69,102 @@ cd fw-fanctrl-kde
 make install
 ```
 
-This will:
+`make install` installs the widget through `kpackagetool6`, sets the helper script executable, and restarts Plasma. `make reinstall` reinstalls, `make uninstall` removes it, `make pack` creates the release archive, and `RESTART=n make install` skips the Plasma restart.
 
-1. Install the plasmoid via `kpackagetool6`
-2. Set executable permissions on the helper script
-3. Restart Plasma shell automatically
+### Uninstall
 
-The source tree also contains README, LICENSE, Makefile and screenshots; use this method if you want to modify or develop the widget.
+```bash
+kpackagetool6 --type=Plasma/Applet --remove com.github.iwinoid.fw-fanctrl-kde
+```
 
 ## Usage
 
-1. Right-click on the panel → **Add Widgets** → Search "Fan"
-2. Click the tray icon to open the popup
-3. Drag the slider to switch strategy
-4. Right-click the tray icon → **Configure** to edit strategies and fan curves
-5. Click **Save** — fw-fanctrl validates and applies the configuration automatically
+1. Right-click the panel, open **Add Widgets** and search for "Fan".
+2. Click the tray icon to open the popup.
+3. Use the slider, or hover the tray icon and scroll the wheel, to switch strategy.
+4. Right-click the tray icon and choose **Configure** to edit strategies and fan curves.
+5. Click **Save**. fw-fanctrl validates and applies the configuration automatically.
 
-## Project Structure
+## Features
+
+- Real-time status: temperature, fan speed, active strategy (2 second poll)
+- Strategy switching: popup slider, or scroll wheel on the tray icon
+- KDE OSD notification when the strategy changes
+- Service control: reload, pause, resume, refresh
+- Online/offline indication: icon, status text, paused animation
+- Config editor: create, edit, rename, delete, and drag-to-reorder strategies
+- Speed curve editor with automatic sorting by temperature
+- Default strategy, plus a separate strategy while on battery
+- Safe saving: fw-fanctrl validates and applies the configuration
+- Bilingual UI: English and Chinese
+
+## Architecture
+
+The project has three parts.
+
+### 1. Backend — `scripts/fw_helper.py`
+
+A Python wrapper around the fw-fanctrl CLI. It always prints JSON on stdout, so the QML side only needs to parse JSON. It normalizes errors, and every command has a timeout so a stuck fw-fanctrl process cannot freeze the widget.
+
+### 2. Widget frontend — `contents/ui/FwBackend.qml` and `contents/ui/main.qml`
+
+The tray widget. It polls fw-fanctrl every 2 seconds for status, renders temperature and fan speed, switches strategies from the slider or the scroll wheel, and shows the strategy change with a KDE OSD notification.
+
+### 3. Editor frontend — `contents/ui/configCurves.qml`
+
+A graphical config editor. It loads the configuration, edits strategies and speed curves, and saves through the backend. Saving validates the curves (no empty curves, no duplicate temperature points), normalizes their order, and lets fw-fanctrl apply them.
+
+### Data flow
+
+QML calls `fw_helper.py` through the Plasma executable `DataSource`. The helper invokes the fw-fanctrl CLI and returns JSON. Saving goes through fw-fanctrl's `set_config`, which validates and applies the configuration.
 
 ```
-fw-fanctrl-kde/
-├── LICENSE                        # GPL-3.0
-├── Makefile                       # Install/uninstall/pack
-├── README.md
-├── README.zh_CN.md
-├── metadata.json                  # Plasmoid metadata
-├── scripts/
-│   └── fw_helper.py              # Python backend (fw-fanctrl CLI wrapper)
-├── contents/
-│   ├── config/
-│   │   ├── config.qml            # Config page registration
-│   │   └── main.xml              # KConfigXT schema
-│   ├── images/
-│   │   ├── 16.png, 32.png, 64.png # Toolbar icons
-│   │   └── offline.png           # Offline state icon
-│   └── ui/
-│       ├── configCurves.qml      # Config editor with drag-and-drop strategy reordering
-│       ├── FwBackend.qml         # QML backend (DataSource + poll timer)
-│       └── main.qml              # Main plasmoid UI
-└── image/
-    └── README/
-        ├── conf.png              # Config editor screenshot
-        └── mainwindow.png        # Popup UI screenshot
+QML (plasmoid UI)  ──executable DataSource──▶  scripts/fw_helper.py  ──CLI──▶  fw-fanctrl  ──▶  fan control
+                                              (JSON over stdout)                 (validates & applies
+                                                                                  /etc/fw-fanctrl/config.json)
 ```
+
+## API
+
+The backend exposes these commands. Each one prints a single JSON object on stdout.
+
+| Command | Description |
+|---|---|
+| `get_status` | Temperature, fan speed, current strategy, list of strategies |
+| `get_strategies` | List of strategy names |
+| `set_strategy <name>` | Switch the active strategy |
+| `reload` | Reload the fw-fanctrl configuration |
+| `pause` / `resume` | Pause or resume fan control |
+| `get_config` | The configuration and its schema |
+| `save_config <json>` | Validate and apply a new configuration |
+
+## Maintainers
+
+- [Iwinoid](https://github.com/iwinoid) — iwinoid@outlook.com
+
+## Thanks
+
+- [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl), GPL-2.0
+- [KDE Plasma & Kirigami](https://kde.org), LGPL-2.0+
+- [Qt 6](https://qt.io), LGPL-3.0 / GPL-2.0
+- [waicool20/fw-fanctrl-ui](https://github.com/waicool20/fw-fanctrl-ui), design reference
+- Built with DeepSeek V4 through [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
+
+## Contributing
+
+Bug reports and questions are welcome on the [GitHub Issues](https://github.com/iwinoid/fw-fanctrl-kde/issues) page. Pull requests are accepted.
+
+This project follows a code-of-conduct style common to open source; be respectful and constructive. If you are unsure whether a change fits, open an issue first.
+
+## Changelog
+
+- **1.2.1** — fix the curve auto-sort corrupting temperature points and blocking save
+- **1.2** — rewrite the config editor: drag-to-reorder strategies, battery strategy, safe saving
+- **1.1** — add the OSD popup and scroll-wheel strategy switching
+- **1.0.1** — first public release
 
 ## License
 
-**GPL-3.0-or-later** — see [LICENSE](LICENSE).
+[GPL-3.0-or-later](LICENSE) © Iwinoid
 
-This project uses [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl) (GPL-2.0),
-[KDE Plasma &amp; Kirigami](https://kde.org) (LGPL-2.0+), and [Qt 6](https://qt.io) (LGPL-3.0 / GPL-2.0).
-
-This project also references the design of [waicool20/fw-fanctrl-ui](https://github.com/waicool20/fw-fanctrl-ui).
+This project uses [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl) (GPL-2.0), [KDE Plasma & Kirigami](https://kde.org) (LGPL-2.0+), and [Qt 6](https://qt.io) (LGPL-3.0 / GPL-2.0). It also references the design of [waicool20/fw-fanctrl-ui](https://github.com/waicool20/fw-fanctrl-ui).
