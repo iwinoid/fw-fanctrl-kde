@@ -192,6 +192,22 @@ def save_config(config_json_str):
     return result
 
 
+def send_notification(title, body):
+    """Send a desktop notification via notify-send (libnotify)."""
+    try:
+        subprocess.run(
+            ["notify-send", "-a", "fw-fanctrl", "-i", "computer-fan",
+             "-u", "critical", "--", title, body],
+            timeout=5,
+            check=False,
+        )
+        return {"success": True, "message": "Notification sent"}
+    except FileNotFoundError:
+        return {"success": False, "message": "notify-send not found"}
+    except subprocess.TimeoutExpired:
+        return {"success": False, "message": "notify-send timed out"}
+
+
 # ─── CLI entry point ───────────────────────────────────────────────
 
 def print_json(data):
@@ -238,6 +254,14 @@ def main():
             sys.exit(1)
         json_str = " ".join(sys.argv[2:])
         print_json(save_config(json_str))
+
+    elif command == "notify":
+        if len(sys.argv) < 4:
+            print_json({"success": False, "message": "Missing title or body"})
+            sys.exit(1)
+        title = sys.argv[2]
+        body = " ".join(sys.argv[3:])
+        print_json(send_notification(title, body))
 
     else:
         print_json({"error": f"Unknown command: {command}"})

@@ -59,13 +59,15 @@ PlasmoidItem {
         onStrategyApplied: function(name) {
             root.showStrategyOSD(name)
         }
+        onServiceOfflineNotice: function(reason) {
+            backend.notify(root.tr("fw-fanctrl is unavailable", "fw-fanctrl 不可用"), reason)
+        }
     }
 
     // ─── Plasmoid Configuration ───────────────────────────────────
-    readonly property string onlineIconPath: Qt.resolvedUrl("../images/64.png")
-    readonly property string offlineIconPath: Qt.resolvedUrl("../images/offline.png")
+    readonly property string widgetIcon: Qt.resolvedUrl("../images/fan.svg")
 
-    Plasmoid.icon: backend.online ? onlineIconPath : offlineIconPath
+    Plasmoid.icon: widgetIcon
     Plasmoid.status: backend.online
         ? PlasmaCore.Types.ActiveStatus
         : PlasmaCore.Types.PassiveStatus
@@ -126,6 +128,7 @@ PlasmoidItem {
         Kirigami.Icon {
             anchors.fill: parent
             source: Plasmoid.icon
+            color: Kirigami.Theme.textColor
             active: compactArea.containsMouse
         }
     }
@@ -237,7 +240,8 @@ PlasmoidItem {
                 Layout.preferredWidth: Kirigami.Units.iconSizes.medium
                 Layout.preferredHeight: Kirigami.Units.iconSizes.medium
                 Layout.alignment: Qt.AlignTop
-                source: onlineIconPath
+                source: root.widgetIcon
+                color: Kirigami.Theme.textColor
             }
 
             ColumnLayout {
