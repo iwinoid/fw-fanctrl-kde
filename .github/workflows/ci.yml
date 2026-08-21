@@ -15,21 +15,25 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Install QML toolchain
-        # kirigami resolves org.kde.kirigami types. Plasma runtime QML modules
-        # (plasmoid, plasma5support, workspace.osd) are not available outside a
-        # Plasma session; their import warnings are tolerated below.
-        run: pacman -Syu --noconfirm git qt6-declarative kirigami
+        # libplasma -> org.kde.plasma.{plasmoid,core,components}
+        # plasma5support -> org.kde.plasma.plasma5support
+        # kirigami -> org.kde.kirigami
+        # Only org.kde.plasma.workspace.osd (OsdWindow, in the huge
+        # plasma-workspace package) is not installed; its cascading warnings
+        # are filtered below.
+        run: pacman -Syu --noconfirm git qt6-declarative kirigami libplasma plasma5support
 
       - name: qmllint
-        # Tolerate only environment warnings (unresolvable Plasma runtime QML
-        # modules and the like). Any real code problem must fail the job.
+        # Tolerate only the OsdWindow / missing-workspace-osd-module cascade
+        # and generic module-load noise. Any real code problem must fail.
         run: |
           set -euo pipefail
           /usr/lib/qt6/bin/qmllint \
             contents/ui/main.qml contents/ui/FwBackend.qml contents/ui/configCurves.qml \
             > /tmp/lint.log 2>&1 || true
           grep -E "^(Warning|Error)" /tmp/lint.log \
-            | grep -viE "(was not found|is not resolved|is not installed|not found in any|no qualifying module|import failure)" \
+            | grep -viE "(org\.kde\.plasma\.workspace\.osd|OsdWindow|osdValue|osdContent|showingProgress|osdPopup)" \
+            | grep -viE "(failed to import|warnings occurred while importing|is not resolved|was not found|is not installed|not found in any|no qualifying module|unknown attached property scope|unknown grouped property scope|import failure)" \
             > /tmp/real.log || true
           if [ -s /tmp/real.log ]; then
             echo "qmllint found real problems:"
