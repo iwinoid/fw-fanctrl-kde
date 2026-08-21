@@ -147,6 +147,7 @@ QML (小组件界面)  ──executable DataSource──▶  scripts/fw_helper.p
 
 - [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl)，GPL-2.0
 - [waicool20/fw-fanctrl-ui](https://github.com/waicool20/fw-fanctrl-ui)，后端设计参考
+- 由 DeepSeek V4 经 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 开发
 
 ## 贡献
 

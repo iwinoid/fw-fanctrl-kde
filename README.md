@@ -144,6 +144,7 @@ The backend exposes these commands. Each one prints a single JSON object on stdo
 
 - [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl), GPL-2.0
 - [waicool20/fw-fanctrl-ui](https://github.com/waicool20/fw-fanctrl-ui), backend design reference
+- Developed by DeepSeek V4 via [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
 
 ## Contributing
 
