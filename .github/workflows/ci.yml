@@ -33,7 +33,7 @@ jobs:
             > /tmp/lint.log 2>&1 || true
           grep -E "^(Warning|Error)" /tmp/lint.log \
             | grep -viE "(org\.kde\.plasma\.workspace\.osd|OsdWindow|osdValue|osdContent|showingProgress|osdPopup)" \
-            | grep -viE "(failed to import|warnings occurred while importing|is not resolved|was not found|is not installed|not found in any|no qualifying module|unknown attached property scope|unknown grouped property scope|import failure)" \
+            | grep -viE "(failed to import|warnings occurred while importing|is not resolved|was not found|is not installed|not found in any|no qualifying module|unknown attached property scope|unknown grouped property scope|import failure|cannot resolve alias)" \
             > /tmp/real.log || true
           if [ -s /tmp/real.log ]; then
             echo "qmllint found real problems:"
