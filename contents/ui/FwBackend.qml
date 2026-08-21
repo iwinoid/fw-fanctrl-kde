@@ -36,6 +36,15 @@ Item {
     property bool m_busy: false
     property bool m_statusPending: false
     property string m_pendingStrategy: ""
+    property int m_offlineStreak: 0
+    property int m_notifyCooldown: 0
+
+    readonly property bool isChinese: Qt.locale().name.startsWith("zh")
+    function tr(en, zh) { return isChinese ? zh : en }
+
+    // Emitted when the service has been offline for several consecutive
+    // polls and enough time has passed since the last notice (rate-limited).
+    signal serviceOfflineNotice(string reason)
 
     readonly property string helperScript: decodeURIComponent(
         Qt.resolvedUrl("../../scripts/fw_helper.py").toString().replace("file://", "")
@@ -92,6 +101,8 @@ Item {
 
             if (command === "get_status")
                 handleStatus(stdout, stderr, exitCode)
+            else if (command === "notify")
+                {} // fire-and-forget, result is ignored
             else
                 handleResult(command, stdout, stderr, exitCode)
         }
@@ -108,6 +119,7 @@ Item {
         var data = parseJSON(stdout)
         if (!data || data.error) {
             setOffline(data ? data.error : stderr)
+            trackOffline()
             return
         }
 
@@ -130,6 +142,24 @@ Item {
             m_temperature = 0
             m_fanSpeed = 0
         }
+
+        trackOffline()
+    }
+
+    // Offline detection: notify only after 3 consecutive failed polls
+    // (~6s), and never more than once per 60s.
+    function trackOffline() {
+        if (m_online) {
+            m_offlineStreak = 0
+        } else {
+            m_offlineStreak++
+            if (m_offlineStreak >= 3 && m_notifyCooldown <= 0) {
+                m_notifyCooldown = 30
+                serviceOfflineNotice(m_lastMessage || tr("fw-fanctrl unavailable", "fw-fanctrl 不可用"))
+            }
+        }
+        if (m_notifyCooldown > 0)
+            m_notifyCooldown--
     }
 
     function handleResult(command, stdout, stderr, exitCode) {
@@ -194,6 +224,11 @@ Item {
     function reload() { execCommand("reload") }
     function pause()  { execCommand("pause") }
     function resume() { execCommand("resume") }
+
+    // Fire-and-forget desktop notification; does not touch busy/status state.
+    function notify(title, body) {
+        executor.connectSource(commandLine("notify", shellQuote(title) + " " + shellQuote(body)))
+    }
 
     // ─── Init ─────────────────────────────────────────────────────
     Component.onCompleted: {
