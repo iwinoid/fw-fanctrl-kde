@@ -1,11 +1,10 @@
-# Fan Control UI for Plasma _(fw-fanctrl-kde)_
-
+# Fan Control UI for Plasma
 [简体中文](README.zh_CN.md)
 
-[![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
-[![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)](https://spdx.org/licenses/GPL-3.0-or-later.html)
-[![powered by DeepSeek](https://img.shields.io/badge/powered_by-DeepSeek-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://deepseek.com)
-[![powered by dsh](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)
+[![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen?style=for-the-badge)](https://github.com/RichardLitt/standard-readme)
+[![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-blue?style=for-the-badge)](https://spdx.org/licenses/GPL-3.0-or-later.html)
+[![powered by DeepSeek](https://img.shields.io/badge/powered_by-DeepSeek-4D6BFE?style=for-the-badge&logo=deepseek&logoColor=white)](https://deepseek.com)
+[![powered by dsh](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=for-the-badge&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)
 [![Platform: Linux](https://img.shields.io/badge/Platform-Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)](https://www.linux.org/)
 [![KDE Plasma 6](https://img.shields.io/badge/KDE_Plasma-6-1D99F3?style=for-the-badge&logo=kde&logoColor=white)](https://kde.org/plasma-desktop)
 [![Python 3](https://img.shields.io/badge/Python-3-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
@@ -14,7 +13,11 @@ Control Framework laptop fan strategies on KDE Plasma 6
 
 A KDE Plasma 6 widget for Framework laptops and other Chrome-EC machines. It wraps the fw-fanctrl fan-control service in a GUI. You can watch temperature and fan speed, switch strategies, and tune speed curves without the terminal. fw-fanctrl validates and applies the configuration when you save.
 
-The project has three parts: a Python backend that wraps the fw-fanctrl CLI, a tray widget frontend, and a graphical config editor.
+## Screenshots
+
+|                Popup UI                |          Configuration Editor          |
+| :------------------------------------: | :------------------------------------: |
+| ![Main Window](image/README/mainwindow.png) | ![Config Editor](image/README/conf.png) |
 
 ## Table of Contents
 
@@ -38,8 +41,6 @@ The project has three parts: a Python backend that wraps the fw-fanctrl CLI, a t
 
 Linux laptop fan control usually needs manual tooling. fw-fanctrl reads a JSON configuration from `/etc/fw-fanctrl/config.json` and drives Chrome-EC fans through speed curves, one per strategy. This project gives fw-fanctrl a Plasma 6 interface: a tray widget for status and switching, and a graphical editor for strategies and curves.
 
-This is a vibe-coding project, built with DeepSeek V4 and [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness). Its design is referenced from [waicool20/fw-fanctrl-ui](https://github.com/waicool20/fw-fanctrl-ui).
-
 ## Install
 
 ### Dependencies
@@ -58,8 +59,6 @@ This is a vibe-coding project, built with DeepSeek V4 and [DeepSeek Harness](htt
 ```bash
 kpackagetool6 --type=Plasma/Applet --install com.github.iwinoid.fw-fanctrl-kde-1.2.1.tar.xz
 ```
-
-The release package contains only runtime files (`metadata.json`, `contents/`, `scripts/`), so it is smaller.
 
 ### From Source
 
@@ -167,4 +166,4 @@ This project follows a code-of-conduct style common to open source; be respectfu
 
 [GPL-3.0-or-later](LICENSE) © Iwinoid
 
-This project uses [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl) (GPL-2.0), [KDE Plasma & Kirigami](https://kde.org) (LGPL-2.0+), and [Qt 6](https://qt.io) (LGPL-3.0 / GPL-2.0). It also references the design of [waicool20/fw-fanctrl-ui](https://github.com/waicool20/fw-fanctrl-ui).
+This project uses [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl) (GPL-2.0), [KDE Plasma & Kirigami](https://kde.org) (LGPL-2.0+), and [Qt 6](https://qt.io) (LGPL-3.0 / GPL-2.0).

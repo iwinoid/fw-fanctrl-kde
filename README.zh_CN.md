@@ -1,11 +1,11 @@
-# Fan Control UI for Plasma _(fw-fanctrl-kde)_
+# Fan Control UI for KDE Plasma
 
 [English](README.md)
 
-[![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
-[![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)](https://spdx.org/licenses/GPL-3.0-or-later.html)
-[![powered by DeepSeek](https://img.shields.io/badge/powered_by-DeepSeek-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://deepseek.com)
-[![powered by dsh](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)
+[![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen?style=for-the-badge)](https://github.com/RichardLitt/standard-readme)
+[![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-blue?style=for-the-badge)](https://spdx.org/licenses/GPL-3.0-or-later.html)
+[![powered by DeepSeek](https://img.shields.io/badge/powered_by-DeepSeek-4D6BFE?style=for-the-badge&logo=deepseek&logoColor=white)](https://deepseek.com)
+[![powered by dsh](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=for-the-badge&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)
 [![Platform: Linux](https://img.shields.io/badge/Platform-Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)](https://www.linux.org/)
 [![KDE Plasma 6](https://img.shields.io/badge/KDE_Plasma-6-1D99F3?style=for-the-badge&logo=kde&logoColor=white)](https://kde.org/plasma-desktop)
 [![Python 3](https://img.shields.io/badge/Python-3-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
@@ -14,7 +14,11 @@
 
 一个 KDE Plasma 6 小部件，给 Framework 笔记本和其他 Chrome-EC 机器使用。它给 fw-fanctrl 风扇控制服务套上图形界面。不用命令行，就能看温度和风扇转速、切换策略、调整速度曲线。保存时由 fw-fanctrl 自动校验并应用配置。
 
-项目分三部分：封装 fw-fanctrl 命令的 Python 后端、托盘小部件前端、图形化配置编辑器。
+## 截图
+
+|               弹出窗口               |             配置编辑器             |
+| :----------------------------------: | :--------------------------------: |
+| ![主窗口](image/README/mainwindow.png) | ![配置编辑器](image/README/conf.png) |
 
 ## 目录
 
@@ -38,13 +42,11 @@
 
 笔记本在 Linux 上控制风扇，通常要靠命令行工具。fw-fanctrl 读取 `/etc/fw-fanctrl/config.json`，按每个策略的速度曲线驱动 Chrome-EC 风扇。本项目给 fw-fanctrl 提供 Plasma 6 界面。托盘小部件看状态、切策略。图形编辑器调策略和曲线。
 
-这是一个 vibe-coding 项目，用 DeepSeek V4 和 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 开发。界面设计参考了 [waicool20/fw-fanctrl-ui](https://github.com/waicool20/fw-fanctrl-ui)。
-
 ## 安装
 
 ### 依赖
 
-- 带 Chrome-EC 的笔记本，装 Linux。Framework 笔记本可用。在 HP Elite Dragonfly Chromebook 上测试过。
+- 带 Chrome-EC 的笔记本，Linux系统。Framework 笔记本可用。在 HP Elite Dragonfly Chromebook 上测试过。
 - KDE Plasma 6
 - Python 3
 - [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl)，已安装并运行。服务拥有 `/etc/fw-fanctrl/config.json`。
@@ -59,7 +61,6 @@
 kpackagetool6 --type=Plasma/Applet --install com.github.iwinoid.fw-fanctrl-kde-1.2.1.tar.xz
 ```
 
-Release 包只包含运行文件（`metadata.json`、`contents/`、`scripts/`），体积更小。
 
 ### 从源码安装
 
@@ -167,4 +168,4 @@ QML (小组件界面)  ──executable DataSource──▶  scripts/fw_helper.p
 
 [GPL-3.0-or-later](LICENSE)，版权归 Iwinoid。
 
-项目使用了 [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl)（GPL-2.0）、[KDE Plasma & Kirigami](https://kde.org)（LGPL-2.0+）和 [Qt 6](https://qt.io)（LGPL-3.0 / GPL-2.0）。界面设计参考了 [waicool20/fw-fanctrl-ui](https://github.com/waicool20/fw-fanctrl-ui)。
+项目使用了 [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl)（GPL-2.0）、[KDE Plasma & Kirigami](https://kde.org)（LGPL-2.0+）和 [Qt 6](https://qt.io)（LGPL-3.0 / GPL-2.0）。
