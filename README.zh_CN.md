@@ -46,7 +46,7 @@
 
 ### 依赖
 
-- 带 Chrome-EC 的笔记本，Linux系统。Framework 笔记本可用。在 HP Elite Dragonfly Chromebook 上测试过。
+- 带 Chrome-EC 的笔记本，Linux系统，比如 Chromebook 和 Framework 笔记本。在 HP Elite Dragonfly Chromebook 上测试过。
 - KDE Plasma 6
 - Python 3
 - [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl)，已安装并运行。服务拥有 `/etc/fw-fanctrl/config.json`。
@@ -146,10 +146,7 @@ QML (小组件界面)  ──executable DataSource──▶  scripts/fw_helper.p
 ## 致谢
 
 - [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl)，GPL-2.0
-- [KDE Plasma & Kirigami](https://kde.org)，LGPL-2.0+
-- [Qt 6](https://qt.io)，LGPL-3.0 / GPL-2.0
-- [waicool20/fw-fanctrl-ui](https://github.com/waicool20/fw-fanctrl-ui)，设计参考
-- 由 DeepSeek V4 经 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 开发
+- [waicool20/fw-fanctrl-ui](https://github.com/waicool20/fw-fanctrl-ui)，后端设计参考
 
 ## 贡献
 
