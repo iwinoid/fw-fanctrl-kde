@@ -1,56 +1,67 @@
+# Fan Control UI for Plasma _(fw-fanctrl-kde)_
+
 [English](README.md)
 
-# Fan Control UI for Plasma
+[![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
+[![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)](https://spdx.org/licenses/GPL-3.0-or-later.html)
+[![powered by DeepSeek](https://img.shields.io/badge/powered_by-DeepSeek-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://deepseek.com)
+[![powered by dsh](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)
+[![Platform: Linux](https://img.shields.io/badge/Platform-Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)](https://www.linux.org/)
+[![KDE Plasma 6](https://img.shields.io/badge/KDE_Plasma-6-1D99F3?style=for-the-badge&logo=kde&logoColor=white)](https://kde.org/plasma-desktop)
+[![Python 3](https://img.shields.io/badge/Python-3-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 
-用于在 Framework 笔记本电脑（或其他兼容Chrome EC的笔记本）上控制 **fw-fanctrl** 风扇策略的 KDE Plasma 6 小部件。我的笔记本是HP Elite Dragonfly Chromebook。
+在 KDE Plasma 6 上控制 Framework 笔记本电脑的风扇策略
 
-一个Vibe Coding项目，由 ![DeepSeek V4](https://img.shields.io/badge/DeepSeek%20V4-1477D1?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMjMuNzQ4IDQuNjUxYy0uMjU0LS4xMjQtLjM2NC4xMTMtLjUxMi4yMzMtLjA1MS4wNC0uMDk0LjA5LS4xMzcuMTM3LS4zNzIuMzk3LS44MDYuNjU3LTEuMzczLjYyNi0uODI5LS4wNDYtMS41MzcuMjE0LTIuMTYzLjg0OC0uMTMzLS43ODItLjU3NS0xLjI0OC0xLjI0Ny0xLjU0OC0uMzUyLS4xNTUtLjcwOC0uMzExLS45NTUtLjY1LS4xNzItLjI0LS4yMTktLjUwOS0uMzA1LS43NzQtLjA1NS0uMTYtLjExLS4zMjMtLjI5My0uMzUtLjItLjAzMS0uMjc4LjEzNi0uMzU2LjI3Ni0uMzEzLjU3Mi0uNDM0IDEuMjAyLS40MjIgMS44NC4wMjcgMS40MzYuNjMzIDIuNTggMS44MzggMy4zOTMuMTM3LjA5NC4xNzIuMTg3LjEyOS4zMjMtLjA4Mi4yOC0uMTguNTUzLS4yNjYuODMzLS4wNTUuMTc5LS4xMzcuMjE4LS4zMjguMTRhNS41IDUuNSAwIDAgMS0xLjczNy0xLjE3OWMtLjg1Ny0uODI4LTEuNjMxLTEuNzQzLTIuNTk3LTIuNDZhMTIgMTIgMCAwIDAtLjY4OS0uNDdjLS45ODUtLjk1Ny4xMy0xLjc0My4zODctMS44MzYuMjctLjA5OC4wOTQtLjQzMy0uNzc4LS40MjgtLjg3Mi4wMDMtMS42Ny4yOTUtMi42ODcuNjg1YTMgMyAwIDAgMS0uNDY1LjEzNiA5LjYgOS42IDAgMCAwLTIuODgzLS4xMDFjLTEuODg1LjIxLTMuMzkgMS4xLTQuNDk3IDIuNjIyQy4wODIgOC43NzYtLjIzMSAxMC44NTQuMTUyIDEzLjAyYy40MDMgMi4yODQgMS41NjggNC4xNzUgMy4zNiA1LjY1MyAxLjg1NyAxLjUzMyAzLjk5NyAyLjI4NCA2LjQzOCAyLjE0IDEuNDgyLS4wODUgMy4xMzItLjI4NCA0Ljk5NC0xLjg2LjQ3LjIzNC45NjIuMzI4IDEuNzguMzk4LjYyOS4wNTggMS4yMzUtLjAzMSAxLjcwNS0uMTI5LjczNS0uMTU1LjY4NC0uODM2LjQxOC0uOTYxLTIuMTU1LTEuMDA0LTEuNjgyLS41OTUtMi4xMTItLjkyNiAxLjA5NS0xLjI5NSAyLjc2OC0zLjU5OCAzLjI4NC02LjczMy4wNS0uMzQ2LjExNS0uODM0LjEwOC0xLjExNC0uMDA0LS4xNzEuMDM1LS4yMzguMjMtLjI1N2E0LjIgNC4yIDAgMCAwIDEuNTQ1LS40NzVjMS4zOTctLjc2MyAxLjk2LTIuMDE2IDIuMDkzLTMuNTE3LjAyLS4yMy0uMDA0LS40NjctLjI0Ny0uNTg4TTExLjU4IDE4LjE2OGMtMi4wODgtMS42NDItMy4xMDEtMi4xODMtMy41Mi0yLjE2LS4zOS4wMjQtLjMyLjQ3Mi0uMjM0Ljc2My4wOS4yODguMjA3LjQ4Ny4zNzEuNzQuMTE0LjE2Ny4xOTIuNDE2LS4xMTMuNjAzLS42NzMuNDE2LTEuODQyLS4xNC0xLjg5Ny0uMTY4LTEuMzYxLS44MDEtMi41LTEuODYtMy4zMDEtMy4zMDYtLjc3NS0xLjM5My0xLjIyNS0yLjg4OC0xLjI5OS00LjQ4Mi0uMDItLjM4NS4wOTQtLjUyMi40NzctLjU5MmE0LjcgNC43IDAgMCAxIDEuNTMtLjAzOGMyLjEzMS4zMTEgMy45NDYgMS4yNjQgNS40NjcgMi43NzQuODY4Ljg2IDEuNTI1IDEuODg3IDIuMjAyIDIuODkuNzIgMS4wNjYgMS40OTQgMi4wODIgMi40OCAyLjkxNS4zNDguMjkxLjYyNi41MTMuODkyLjY3Ny0uODAyLjA5LTIuMTQuMTA5LTMuMDU1LS42MTV6bTEuMDAxLTYuNDRhLjMwNi4zMDYgMCAwIDEgLjQxNS0uMjg3LjMuMyAwIDAgMSAuMTEzLjA3NC4zLjMgMCAwIDEgLjA4Ni4yMTRjMCAuMTctLjEzNi4zMDctLjMwOC4zMDdhLjMwMy4zMDMgMCAwIDEtLjMwNi0uMzA3bTMuMTEgMS41OTZjLS4yLjA4MS0uNC4xNTEtLjU5MS4xNmExLjI1IDEuMjUgMCAwIDEtLjc5OC0uMjU0Yy0uMjc0LS4yMy0uNDctLjM1OC0uNTUxLS43NThhMS43IDEuNyAwIDAgMSAuMDE1LS41ODhjLjA3LS4zMjctLjAwNy0uNTM3LS4yMzgtLjcyNy0uMTg4LS4xNTYtLjQyNi0uMTk5LS42ODktLjE5OWEuNi42IDAgMCAxLS4yNTQtLjA3OC4yNTMuMjUzIDAgMCAxLS4xMTQtLjM1OCAxIDEgMCAwIDEgLjE5Mi0uMjFjLjM1Ni0uMjAyLjc2Ny0uMTM2IDEuMTQ2LjAxNi4zNTIuMTQ0LjYxOC40MDggMS4wMDEuNzgyLjM5Mi40NTEuNDYyLjU3Ni42ODUuOTE1LjE3Ni4yNjQuMzM2LjUzNi40NDYuODQ4LjA2Ni4xOTQtLjAyLjM1My0uMjUuNDUiLz48L3N2Zz4=&logoColor=white)驱动
+一个 KDE Plasma 6 小部件，给 Framework 笔记本和其他 Chrome-EC 机器使用。它给 fw-fanctrl 风扇控制服务套上图形界面。不用命令行，就能看温度和风扇转速、切换策略、调整速度曲线。保存时由 fw-fanctrl 自动校验并应用配置。
 
-功能
+项目分三部分：封装 fw-fanctrl 命令的 Python 后端、托盘小部件前端、图形化配置编辑器。
 
-- **实时状态**：显示当前温度、风扇转速和策略
-- **策略滑条**：快速在静音↔性能之间切换策略
-- **系统托盘集成**：附带悬停在图标上滑动滚轮进行策略切换
-- **配置编辑器**：创建、编辑、重命名、删除、拖拽排序策略，配置速度曲线
-- **响应式布局**：编辑器随窗口自适应，长列表在内部滚动
-- **电池策略**：可单独设置电池供电时的策略
-- **安全保存**：保存时由 fw-fanctrl 自动校验并应用
-- **OSD集成**：兼容KDE的OSD
+## 目录
 
+- [背景](#背景)
+- [安装](#安装)
+  - [依赖](#依赖)
+  - [从 Release 安装](#从-release-安装)
+  - [从源码安装](#从源码安装)
+  - [卸载](#卸载)
+- [使用](#使用)
+- [功能](#功能)
+- [架构](#架构)
+- [API](#api)
+- [维护者](#维护者)
+- [致谢](#致谢)
+- [贡献](#贡献)
+- [更新日志](#更新日志)
+- [许可](#许可)
 
-## 截图
+## 背景
 
-|               弹出窗口               |             配置编辑器             |
-| :----------------------------------: | :--------------------------------: |
-| ![主窗口](image/README/mainwindow.png) | ![配置编辑器](image/README/conf.png) |
+笔记本在 Linux 上控制风扇，通常要靠命令行工具。fw-fanctrl 读取 `/etc/fw-fanctrl/config.json`，按每个策略的速度曲线驱动 Chrome-EC 风扇。本项目给 fw-fanctrl 提供 Plasma 6 界面。托盘小部件看状态、切策略。图形编辑器调策略和曲线。
 
-## 依赖
-
-![Linux](https://img.shields.io/badge/Platform-Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black) （在 ![Arch](https://img.shields.io/badge/-Arch_Linux-1793D1?style=for-the-badge&logo=archlinux&logoColor=white) 上测试）
-
-![KDE Plasma](https://img.shields.io/badge/KDE_Plasma-1D99F3?style=for-the-badge&logo=kde&logoColor=white)
-
-![Python 3](https://img.shields.io/badge/Python%203-3776AB?style=for-the-badge&logo=python&logoColor=white)
-
-**fw-fanctrl** — [TamtamHero/fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl)
+这是一个 vibe-coding 项目，用 DeepSeek V4 和 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 开发。界面设计参考了 [waicool20/fw-fanctrl-ui](https://github.com/waicool20/fw-fanctrl-ui)。
 
 ## 安装
 
-### 从 Release 安装（普通用户推荐）
+### 依赖
 
-1. 从 [Releases](../../releases) 页面下载 `com.github.iwinoid.fw-fanctrl-kde-1.2.1.tar.xz` 包。
-2. 在 Plasma 中打开 **添加小部件 → 获取新小部件... → 从本地文件安装**，选择下载的 `.tar.xz`。
-3. 或者使用终端安装：
+- 带 Chrome-EC 的笔记本，装 Linux。Framework 笔记本可用。在 HP Elite Dragonfly Chromebook 上测试过。
+- KDE Plasma 6
+- Python 3
+- [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl)，已安装并运行。服务拥有 `/etc/fw-fanctrl/config.json`。
+
+### 从 Release 安装
+
+1. 从 [Releases](https://github.com/iwinoid/fw-fanctrl-kde/releases) 页面下载 `com.github.iwinoid.fw-fanctrl-kde-1.2.1.tar.xz`。
+2. 在 Plasma 里打开 **添加小部件 → 获取新小部件... → 从本地文件安装**，选择该包。
+3. 或用终端安装：
 
 ```bash
 kpackagetool6 --type=Plasma/Applet --install com.github.iwinoid.fw-fanctrl-kde-1.2.1.tar.xz
 ```
 
-4. 如果小部件没有立即出现，重启 Plasma 即可。
+Release 包只包含运行文件（`metadata.json`、`contents/`、`scripts/`），体积更小。
 
-Release 包只包含运行所需文件（`metadata.json`、`contents/`、`scripts/`），体积更小，适合普通用户。
-
-### 源码安装（开发者）
+### 从源码安装
 
 ```bash
 git clone https://github.com/iwinoid/fw-fanctrl-kde.git
@@ -58,55 +69,102 @@ cd fw-fanctrl-kde
 make install
 ```
 
-将自动：
+`make install` 通过 `kpackagetool6` 安装小部件，设置辅助脚本执行权限，并重启 Plasma。`make reinstall` 重装，`make uninstall` 卸载，`make pack` 打 Release 包。不想自动重启时用 `RESTART=n make install`。
 
-1. 通过 `kpackagetool6` 安装小部件
-2. 设置辅助脚本的可执行权限
-3. 自动重启 Plasma
+### 卸载
 
-源码目录还包含 README、LICENSE、Makefile 和截图；如果你想修改或二次开发，请使用源码安装。
+```bash
+kpackagetool6 --type=Plasma/Applet --remove com.github.iwinoid.fw-fanctrl-kde
+```
 
 ## 使用
 
-1. 右键面板 → **添加小部件** → 搜索"风扇"
-2. 点击托盘图标打开弹出窗口
-3. 拖动滑条切换策略
-4. 右键托盘图标 → **配置** 编辑策略和风扇曲线
-5. 点击 **保存**，fw-fanctrl 会自动校验并应用配置
+1. 右键面板，打开 **添加小部件**，搜索"风扇"。
+2. 点击托盘图标打开弹出窗口。
+3. 用滑条切换策略，或悬停托盘图标滚动滚轮。
+4. 右键托盘图标，选择 **配置**，编辑策略和风扇曲线。
+5. 点击 **保存**。fw-fanctrl 自动校验并应用配置。
 
-## 项目结构
+## 功能
+
+- 实时状态：温度、风扇转速、当前策略（2 秒轮询）
+- 切换策略：弹出窗滑条，或托盘图标滚轮
+- 策略切换时显示 KDE OSD 通知
+- 服务控制：重载、暂停、恢复、刷新
+- 在线/离线提示：图标、状态文字、暂停动画
+- 配置编辑器：新建、编辑、重命名、删除、拖拽排序策略
+- 速度曲线编辑器，按温度自动排序
+- 默认策略，以及电池供电时的独立策略
+- 安全保存：fw-fanctrl 校验并应用配置
+- 中英双语界面
+
+## 架构
+
+项目分三部分。
+
+### 1. 后端 ： `scripts/fw_helper.py`
+
+fw-fanctrl 命令行的 Python 封装。所有命令都在 stdout 输出 JSON，QML 侧只需解析 JSON。错误会归一化。每条命令都有超时，fw-fanctrl 卡住也不会冻住小部件。
+
+### 2. 小组件前端 ： `contents/ui/FwBackend.qml` 和 `contents/ui/main.qml`
+
+托盘小部件。每 2 秒轮询 fw-fanctrl 获取状态，显示温度和风扇转速。用滑条或滚轮切换策略。用 KDE OSD 通知策略变化。
+
+### 3. 编辑器前端 ： `contents/ui/configCurves.qml`
+
+图形化配置编辑器。加载配置，编辑策略和速度曲线，通过后端保存。保存前校验曲线（不允许空曲线、不允许重复温度点），归一化顺序，再交给 fw-fanctrl 应用。
+
+### 数据流
+
+QML 通过 Plasma 的 executable `DataSource` 调用 `fw_helper.py`。辅助脚本调用 fw-fanctrl 命令行并返回 JSON。保存走 fw-fanctrl 的 `set_config`，由它校验并应用配置。
 
 ```
-fw-fanctrl-kde/
-├── LICENSE                        # GPL-3.0
-├── Makefile                       # 安装/卸载/打包
-├── README.md
-├── README.zh_CN.md
-├── metadata.json                  # Plasmoid 元数据
-├── scripts/
-│   └── fw_helper.py              # Python 后端 (fw-fanctrl CLI 封装)
-├── contents/
-│   ├── config/
-│   │   ├── config.qml            # 配置页注册
-│   │   └── main.xml              # KConfigXT 配置表
-│   ├── images/
-│   │   ├── 16.png, 32.png, 64.png # 工具栏图标
-│   │   └── offline.png           # 离线状态图标
-│   └── ui/
-│       ├── configCurves.qml      # 配置编辑器，支持拖拽排序策略
-│       ├── FwBackend.qml         # QML 后端 (DataSource + 轮询定时器)
-│       └── main.qml              # 主界面
-└── image/
-    └── README/
-        ├── conf.png              # 配置编辑器截图
-        └── mainwindow.png        # 弹出窗口截图
+QML (小组件界面)  ──executable DataSource──▶  scripts/fw_helper.py  ──CLI──▶  fw-fanctrl  ──▶  风扇控制
+                                              (stdout 输出 JSON)                (校验并应用
+                                                                                /etc/fw-fanctrl/config.json)
 ```
+
+## API
+
+后端提供以下命令。每条命令在 stdout 输出一个 JSON 对象。
+
+| 命令 | 说明 |
+|---|---|
+| `get_status` | 温度、风扇转速、当前策略、策略列表 |
+| `get_strategies` | 策略名列表 |
+| `set_strategy <name>` | 切换当前策略 |
+| `reload` | 重载 fw-fanctrl 配置 |
+| `pause` / `resume` | 暂停或恢复风扇控制 |
+| `get_config` | 配置及其 schema |
+| `save_config <json>` | 校验并应用新配置 |
+
+## 维护者
+
+- [Iwinoid](https://github.com/iwinoid) ： iwinoid@outlook.com
+
+## 致谢
+
+- [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl)，GPL-2.0
+- [KDE Plasma & Kirigami](https://kde.org)，LGPL-2.0+
+- [Qt 6](https://qt.io)，LGPL-3.0 / GPL-2.0
+- [waicool20/fw-fanctrl-ui](https://github.com/waicool20/fw-fanctrl-ui)，设计参考
+- 由 DeepSeek V4 经 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 开发
+
+## 贡献
+
+问题报告和提问请到 [GitHub Issues](https://github.com/iwinoid/fw-fanctrl-kde/issues) 页面。接受 Pull Request。
+
+请保持友善和建设性。不确定改动是否合适时，先开 issue 讨论。
+
+## 更新日志
+
+- **1.2.1** ： 修复曲线自动排序污染温度点、导致保存失败的问题
+- **1.2** ： 重写配置编辑器：拖拽排序策略、电池策略、安全保存
+- **1.1** ： 增加 OSD 弹窗和滚轮切换策略
+- **1.0.1** ： 首个公开发布
 
 ## 许可
 
-**GPL-3.0-or-later** — 详见 [LICENSE](LICENSE)。
+[GPL-3.0-or-later](LICENSE)，版权归 Iwinoid。
 
-本项目使用了 [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl) (GPL-2.0)、
-[KDE Plasma &amp; Kirigami](https://kde.org) (LGPL-2.0+) 和 [Qt 6](https://qt.io) (LGPL-3.0 / GPL-2.0)。
-
-本项目还参考了 [waicool20/fw-fanctrl-ui](https://github.com/waicool20/fw-fanctrl-ui) 的代码设计。
+项目使用了 [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl)（GPL-2.0）、[KDE Plasma & Kirigami](https://kde.org)（LGPL-2.0+）和 [Qt 6](https://qt.io)（LGPL-3.0 / GPL-2.0）。界面设计参考了 [waicool20/fw-fanctrl-ui](https://github.com/waicool20/fw-fanctrl-ui)。
