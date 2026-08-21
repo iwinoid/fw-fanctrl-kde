@@ -47,10 +47,12 @@ Developed by DeepSeek V4 via [DeepSeek Harness](https://github.com/deepseek-ai/d
 
 ### Dependencies
 
-- Linux on a laptop with Chrome EC, such as Chromebooks and Framework Laptops; tested on an HP Elite Dragonfly Chromebook.
+- Linux kernel ≥ 6.11 on a laptop with Chrome EC, such as Chromebooks and Framework Laptops; tested on an HP Elite Dragonfly Chromebook.
 - KDE Plasma 6
-- Python 3
+- Python ≥ 3.12
 - [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl), installed and running. The service owns `/etc/fw-fanctrl/config.json`.
+
+The kernel and Python minimum versions are inherited from fw-fanctrl.
 
 ### From Release
 
