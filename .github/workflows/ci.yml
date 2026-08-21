@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  qml-lint:
+    name: QML lint
+    runs-on: ubuntu-latest
+    container: docker.io/archlinux:latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install QML toolchain
+        run: pacman -Syu --noconfirm git qt6-declarative kirigami plasma-framework
+
+      - name: qmllint
+        # Tolerate only environment warnings (Plasma runtime QML modules that
+        # cannot be resolved outside a real Plasma session). Anything else
+        # must be zero.
+        run: |
+          set -euo pipefail
+          /usr/lib/qt6/bin/qmllint \
+            contents/ui/main.qml contents/ui/FwBackend.qml contents/ui/configCurves.qml \
+            > /tmp/lint.log 2>&1 || true
+          grep -E "^(Warning|Error)" /tmp/lint.log \
+            | grep -v "was not found" \
+            | grep -v "is not resolved" \
+            | grep -v "is not installed" \
+            | grep -v "not found in any" \
+            > /tmp/real.log || true
+          if [ -s /tmp/real.log ]; then
+            echo "qmllint found real problems:"
+            cat /tmp/real.log
+            exit 1
+          fi
+          echo "qmllint: only environment-related warnings, OK"
+
+  python-and-pack:
+    name: Python tests & packaging
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compile backend
+        run: python3 -m py_compile scripts/fw_helper.py
+
+      - name: Run unit tests
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Build release package
+        run: make pack
+
+      - name: Verify package contents
+        run: |
+          set -euo pipefail
+          pkg="$(ls ../com.github.iwinoid.fw-fanctrl-kde-*.tar.xz)"
+          echo "package: $pkg ($(du -h "$pkg" | cut -f1))"
+          tar -tf "$pkg" | grep -q "fw-fanctrl-kde/metadata.json"      || { echo "metadata.json missing"; exit 1; }
+          tar -tf "$pkg" | grep -q "fw-fanctrl-kde/contents/ui/main.qml" || { echo "main.qml missing"; exit 1; }
+          tar -tf "$pkg" | grep -q "fw-fanctrl-kde/scripts/fw_helper.py" || { echo "fw_helper.py missing"; exit 1; }
+          if tar -tf "$pkg" | grep -qE "(^|/)tests?/|\.qmllint\.ini"; then
+            echo "dev-only files leaked into the release package"
+            tar -tf "$pkg" | grep -E "(^|/)tests?/|\.qmllint\.ini"
+            exit 1
+          fi
+          echo "package contents OK"
