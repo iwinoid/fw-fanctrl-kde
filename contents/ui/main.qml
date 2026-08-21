@@ -327,9 +327,9 @@ PlasmoidItem {
                         font.pointSize: Kirigami.Theme.smallFont.pointSize
                     }
                     Rectangle {
-                        width: Kirigami.Units.smallSpacing
-                        height: Kirigami.Units.smallSpacing
-                        radius: width / 2
+                        implicitWidth: Kirigami.Units.smallSpacing
+                        implicitHeight: Kirigami.Units.smallSpacing
+                        radius: implicitWidth / 2
                         color: backend.online ? Kirigami.Theme.positiveTextColor : Kirigami.Theme.negativeTextColor
                         SequentialAnimation on color {
                             running: !backend.online
