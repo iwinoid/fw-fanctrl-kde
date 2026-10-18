@@ -188,6 +188,9 @@ Item {
         return s && s.speedCurve ? s.speedCurve : [];
     }
 
+    // Guard against no-op writes: switching the selected strategy re-evaluates
+    // the editor bindings, and a value that is already stored must not mark the
+    // configuration as modified (otherwise browsing strategies enables Save).
     function updateParam(key, value) {
         if (!configData.strategies || !selectedStrategy)
             return;
@@ -195,13 +198,15 @@ Item {
             configData.strategies[selectedStrategy] = {
                 speedCurve: []
             };
+        if (configData.strategies[selectedStrategy][key] === value)
+            return;
         configData.strategies[selectedStrategy][key] = value;
         configChanged = true;
     }
 
     function updateCurvePoint(index, key, value) {
         var pts = getCurvePoints();
-        if (index >= 0 && index < pts.length) {
+        if (index >= 0 && index < pts.length && pts[index][key] !== value) {
             pts[index][key] = value;
             configChanged = true;
         }
