@@ -3,3 +3,5 @@ fw-fanctrl-plasmoid.code-workspace
 __pycache__/
 *.pyc
 *.tar.gz
+# Local scratch space for previews, screenshots and verification scripts.
+tmp/
