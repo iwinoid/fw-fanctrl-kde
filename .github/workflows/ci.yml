@@ -76,9 +76,9 @@ jobs:
           grep -q "fw-fanctrl-kde/metadata.json"      /tmp/pkglist || { echo "metadata.json missing"; exit 1; }
           grep -q "fw-fanctrl-kde/contents/ui/main.qml" /tmp/pkglist || { echo "main.qml missing"; exit 1; }
           grep -q "fw-fanctrl-kde/scripts/fw_helper.py" /tmp/pkglist || { echo "fw_helper.py missing"; exit 1; }
-          if grep -qE "(^|/)tests?/|\.qmllint\.ini|\.github/|pkglist" /tmp/pkglist; then
+          if grep -qE "(^|/)tests?/|\.qmllint\.ini|\.github/|docs/|HANDOFF\.md|pkglist" /tmp/pkglist; then
             echo "dev-only files leaked into the release package"
-            grep -E "(^|/)tests?/|\.qmllint\.ini|\.github/|pkglist" /tmp/pkglist
+            grep -E "(^|/)tests?/|\.qmllint\.ini|\.github/|docs/|HANDOFF\.md|pkglist" /tmp/pkglist
             exit 1
           fi
           echo "package contents OK"

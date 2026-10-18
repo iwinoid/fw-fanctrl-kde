@@ -54,6 +54,7 @@ pack:
 		--exclude='Makefile' --exclude='image' --exclude='tests' \
 		--exclude='.qmllint.ini' --exclude='.gitignore' \
 		--exclude='.github' --exclude='$(PKG_DIR)/tmp' \
+		--exclude='$(PKG_DIR)/docs' --exclude='$(PKG_DIR)/HANDOFF.md' \
 		-cJf $(PLASMOID_ID)-$(VERSION).tar.xz $(PKG_DIR)/
 	@echo "✓ Packed to ../$(PLASMOID_ID)-$(VERSION).tar.xz"
 
