@@ -30,6 +30,7 @@ jobs:
           set -euo pipefail
           /usr/lib/qt6/bin/qmllint \
             contents/ui/main.qml contents/ui/FwBackend.qml contents/ui/configCurves.qml \
+            contents/config/config.qml \
             > /tmp/lint.log 2>&1 || true
           grep -E "^(Warning|Error)" /tmp/lint.log \
             | grep -viE "(org\.kde\.plasma\.workspace\.osd|OsdWindow|osdValue|osdContent|showingProgress|osdPopup)" \
