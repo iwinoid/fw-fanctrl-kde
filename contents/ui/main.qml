@@ -201,6 +201,21 @@ PlasmoidItem {
                             }
                         }
                     }
+
+                    // Dragging the slider replaces its value binding, so
+                    // external strategy changes (tray wheel, config save) are
+                    // applied imperatively while the user is not dragging.
+                    Connections {
+                        target: backend
+
+                        function onCurrentStrategyChanged() {
+                            if (strategySlider.pressed)
+                                return;
+                            var idx = backend.strategies.indexOf(backend.currentStrategy);
+                            if (idx >= 0 && strategySlider.value !== idx)
+                                strategySlider.value = idx;
+                        }
+                    }
                 }
 
                 RowLayout {
