@@ -1,10 +1,10 @@
 # fw-fanctrl-kde 交接说明
 
-最后更新：2026-10-19。本轮代码提交：`9ac28ca`、`9fff1b6`、`58db4c1`；本文档为单独提交。
+最后更新：2026-10-19。本轮（质量检查与修复）共 9 个提交：`9ac28ca`、`9fff1b6`、`58db4c1`、`26b227a`、`4c06cc8`、`9f79cc6`、`2cd7610`、`26731ab`、`690e7c6`；本文档的更新为单独提交。
 
 ## 一句话状态
 
-v1.3 功能完整、可运行；本轮完成质量检查与修复（3 个提交，未发版）。本机部件已安装、`fw-fanctrl` 服务运行中；`main` 领先 `origin/main` 3 个提交，网络恢复后需要推送。
+v1.3 功能完整、可运行；本轮完成质量检查、缺陷修复与交接。本机部件已安装、`fw-fanctrl` 服务运行中；`main` 领先 `origin/main`，网络恢复后需要推送。
 
 ## 项目与环境
 
@@ -21,40 +21,71 @@ v1.3 功能完整、可运行；本轮完成质量检查与修复（3 个提交�
 | 路径 | 作用 |
 |---|---|
 | `contents/ui/main.qml` | 托盘 applet 主界面：策略滑杆、风扇转速、服务控制按钮、OSD 通知、滚轮切换策略 |
-| `contents/ui/FwBackend.qml` | 后端：`plasma5support.DataSource` 调 `scripts/fw_helper.py`，2 秒轮询、JSON 解析、离线检测与限流通知 |
+| `contents/ui/FwBackend.qml` | 后端：`plasma5support.DataSource` 调 `scripts/fw_helper.py`，2 秒轮询、JSON 解析、离线检测与一次性通知 |
 | `contents/ui/configCurves.qml` | 配置编辑器：策略增删改/拖拽排序、曲线点编辑与自动排序、默认/电池策略、保存校验 |
 | `contents/config/config.qml` | 配置页注册（`ConfigModel` → `configCurves.qml`），语言随 `Qt.locale()` |
 | `scripts/fw_helper.py` | 唯一后端入口，stdout 只输出 JSON；命令：`get_status` `get_strategies` `set_strategy` `reload` `pause` `resume` `get_config` `save_config` `notify` |
-| `tests/test_fw_helper.py` | 32 个 Python 单测（helper 全命令与错误路径） |
+| `tests/test_fw_helper.py` | 36 个 Python 单测（helper 全命令、错误路径、通知参数、dispatch） |
 | `Makefile` | `install` / `reinstall` / `uninstall` / `pack` / `clean` / `restart-plasma` |
 | `.github/workflows/ci.yml` | QML lint（Arch 容器）+ Python 单测 + 打包内容校验 |
+| `HANDOFF.md` | 本文件 |
 
 数据流：`QML → executable DataSource → fw_helper.py → fw-fanctrl CLI → /etc/fw-fanctrl/config.json`。保存走 `fw-fanctrl set_config`，由 fw-fanctrl 自己校验并生效，GUI 不直接写系统文件。
 
-## 本轮（2026-10-19）检查结果
-
-全部在项目内实际执行过，命令见下节。
+## 本轮检查结果（全部实际执行）
 
 | 检查 | 结果 |
 |---|---|
-| Qt6 `qmllint` 4 个 QML 文件 | 通过：无任何警告/错误（修复前 `config.qml` 有 1 条 Unqualified access） |
+| Qt6 `qmllint` 4 个 QML 文件 | 通过：无警告/错误（修复前 `config.qml` 有 1 条 Unqualified access） |
 | `qmlformat` 幂等性 | 4 个文件格式化后与仓库内容零差异 |
-| Python 单测 | `Ran 32 tests ... OK` |
+| Python 单测 | `Ran 36 tests ... OK` |
 | `py_compile` | 通过 |
-| 打包 + CI 包内容检查 | 通过：14 条目、无 `tests/`/`.qmllint.ini`/`.github/` 泄漏（新增排除 `tmp/`） |
+| 打包 + CI 包内容检查 | 通过：14 条目、无 `tests/`/`.qmllint.ini`/`.github/`/`tmp/` 泄漏 |
 | 隔离安装 `kpackagetool6` | 通过（`XDG_DATA_HOME` 指向项目 `tmp/`，未动系统） |
-| 无头预览（Xvfb + plasmoidviewer，软件渲染） | applet 正常渲染，日志无 QML 错误；从打包产物安装的副本加载正常 |
+| 无头预览（Xvfb + plasmoidviewer，软件渲染） | applet 正常渲染，日志无 QML 错误/warning，从打包产物安装的副本加载正常 |
 | helper 对接真实服务 | `get_status` / `get_strategies` / `get_config` 均返回合法 JSON |
-| 配置编辑器离屏测试 | 加载真实 `/etc/fw-fanctrl/config.json`；加载后不脏、浏览策略不脏、真实修改仍脏（缺陷修复的回归验证） |
+| 配置编辑器离屏回归 | 浏览策略不脏；编辑后切换到另一策略，SpinBox/名称框自动同步且不污染新策略数据；重命名后切换策略名称框跟随；ComboBox 随策略列表变化重同步；`-` 开头的策略名被拒绝 |
+| 离线通知离屏回归 | 连续离线只通知 1 次；恢复后再离线会通知第 2 次 |
 | `config.qml` 构造测试 | `count=1`，分类名 `风扇曲线`、图标/源正确 |
 
-### 本轮提交
+## 本轮提交
 
 | 提交 | 内容 |
 |---|---|
-| `9ac28ca` | `fix(config-editor)`：`updateParam`/`updateCurvePoint` 跳过同值写入，修掉“只切换策略就变成已修改、Save 误亮、重载弹丢弃确认”的问题 |
-| `9fff1b6` | `lint(config)`：`contents/config/config.qml` 用根对象 id 限定 `tr()`，跑 `qmlformat`，并加入 CI 的 qmllint 文件列表（此前该文件从未被 lint） |
-| `58db4c1` | `chore`：`.gitignore` 忽略 `tmp/`；`make pack` 排除 `$(PKG_DIR)/tmp`（`--exclude-vcs` 不会跳过被 gitignore 的目录，本地打包会把截图带进发布包） |
+| `9ac28ca` | `fix(config-editor)`：`updateParam`/`updateCurvePoint` 跳过同值写入，修掉“只切换策略就变成已修改、Save 误亮、重载弹丢弃确认” |
+| `9fff1b6` | `lint(config)`：`config.qml` 用根对象 id 限定 `tr()`，跑 `qmlformat`，并加入 CI 的 qmllint 文件列表（此前从未被 lint） |
+| `58db4c1` | `chore`：`.gitignore` 忽略 `tmp/`；`make pack` 排除 `$(PKG_DIR)/tmp` |
+| `26b227a` | `docs`：新增本文件 |
+| `4c06cc8` | `fix(config-editor)`：用 `Connections` 显式重同步编辑器控件（名称框、两个 SpinBox、两个 ComboBox），修复用户交互破坏 QML 绑定后的陈旧值/写错策略/重命名错乱；策略名禁止 `-` 开头（fw-fanctrl argparse 会把它当选项） |
+| `9f79cc6` | `fix(applet)`：滑杆被拖动后绑定失效，外部策略切换（滚轮/保存）现在会显式同步滑杆位置 |
+| `2cd7610` | `fix(backend)`：离线通知改为每个离线周期只弹一次（原来每 60 秒一次），通知级别从 `critical` 降为 `normal` |
+| `26731ab` | `test`：补 `notify-send` 参数、`OSError`、`set_strategy` 缺参、简单命令 dispatch 测试 |
+| `690e7c6` | `ci`：Arch 容器无 git 会在 checkout 前失败，checkout 之前先 `pacman -Sy --needed --noconfirm git`（见 `ci.yml`） |
+
+## 独立只读审计发现（尚未修复，按优先级）
+
+| 级别 | 问题 | 位置 | 建议 |
+|---|---|---|---|
+| 高 | **i18n 自造方案**：全部可见文案用 `tr(en, zh)` + `Qt.locale()` 手写双语，没有 `i18n()`/po/locale。KDE 语言设置（`LANGUAGE`/KLocalizedString）与 `Qt.locale()` 可不一致，可能出现“部件名中文、UI 英文”；也无法被翻译者提取 | `main.qml:19-23`、`FwBackend.qml:42-45`、`configCurves.qml:24-27`、`config.qml` | 迁移到 `i18n()`/`i18nc()` + `contents/locale/<lang>/LC_MESSAGES/*.mo`；若坚持轻量双语，在 README 明确说明这是有意设计 |
+| 中 | **CI lint 过滤规则过宽**：`|| true` + 过滤 `is not resolved`/`not found in any`/`cannot resolve alias` 等通用措辞，会吞掉真实代码错误；`.qmllint.ini` 的 `MaxWarnings=-1` 让本地有警告也 exit 0 | `ci.yml:30-42`、`.qmllint.ini:3` | 容器补装 `plasma-workspace` 去掉 OsdWindow 级联后删除大部分过滤；本地用“stderr 非空即失败”判定 |
+| 中 | **`FwBackend` 无看门狗**：`m_statusPending`/`m_busy` 只在命令返回时复位；`commandFromSource()` 解析失败时 pending 永不复位，轮询永久停止 | `FwBackend.qml:74-86`、`:58-65` | 加 15-20 秒 watchdog；解析失败也复位 |
+| 中 | **配置编辑器命令无防重入/超时**：保存中可点重载，结果乱序；`saving` 不复位时保存按钮永久禁用 | `configCurves.qml:66-91`、`:128-137` | 加忙状态与超时复位，或命令队列 |
+| 中 | **`make` 默认目标会安装部件并重启 plasmashell**，且重启方式脱离 systemd --user 管理 | `Makefile:7,11,13-19` | `all` 改为只读目标；重启用 `systemctl --user restart plasma-plasmashell` |
+| 中 | **install 的 legacy fallback 会复制开发文件**（`cp -r ./*` 含 `tests/`、`tools/`、`tmp/`） | `Makefile:23-32` | 显式只复制 `contents/`、`scripts/`、`metadata.json`，两条路径都清理 |
+| 中 | **CI 环境不锁版本、不验证包结构/可执行位**：`archlinux:latest` 滚动、`pacman -Syu` 未先更新 keyring；未验证 `kpackagetool6` 能否安装、tar 内 helper 是否 0755 | `ci.yml` | 固定镜像 tag；增加 `kpackagetool6 --install` 与 `tar -tvf` 权限断言 |
+| 低 | **无 QML 层测试**：曲线排序/校验/脏标记等纯 JS 逻辑无自动化用例（本轮用离屏脚本临时验证，未入库） | `tests/` | 新建 `tests/qml/`，用 `qmltestrunner` 覆盖 `sortCurrentCurve`、`validateAndNormalizeCurves`、引用校验 |
+| 低 | **`get_config` 返回的 schema 未被使用**，但 README 仍宣传返回“配置及其 schema” | `fw_helper.py:160-165`、`configCurves.qml:109-120` | 用 schema 做前端校验，或从返回值和文档移除 |
+| 低 | **README 中英不同步**：标题不同（`for Plasma` vs `for KDE Plasma`）；API 表未列内部命令 `notify`；无 Development/Testing 小节；未说明配置页 Save 与 Plasma 配置对话框 Apply 无关 | `README.md`、`README.zh_CN.md` | 统一并补开发/测试与保存语义说明 |
+| 低 | **版本管理不自洽**：有 v1.2.3 提交但没有 v1.2.3 tag，changelog 也未列 | git tags / README changelog | 补 tag 或在 changelog 记一笔；发布用 tag 与 metadata 同步 |
+| 低 | **OSD 模块最低 Plasma 版本未核实**：`org.kde.plasma.workspace.osd` 在本机 6.8 存在，但 metadata 写 `X-Plasma-API-Minimum-Version: 6.0` | `main.qml:8`、`metadata.json:23` | 核实引入版本并提高最低版本，或在 README 写明依赖 |
+| 低 | **配置页根 Item 上的 `Layout.minimumWidth/Height` 无效**（root 不是 Layout 子项） | `configCurves.qml:21-22` | 删除，改用 implicit 约束 |
+| 低 | **2 秒轮询每次 fork python + fw-fanctrl**（实测单次约 0.3s，每分钟约 30 次进程启动） | `FwBackend.qml:25,208-213` | 间隔可配置或 5s；长期改成常驻 helper + unix socket |
+| 低 | **配置页 Save 与 Plasma 配置对话框 Apply/OK 无关**，未点 Save 关闭会静默丢失修改 | `configCurves.qml:433-450`、`config.qml` | 配置页顶部加提示；或“应用即保存” |
+| 低 | **`.qmllint.ini` 有多项 `disable` 且 `MaxWarnings=-1`**，未来回归可能静默 | `.qmllint.ini:3,9,28,64,78` | 默认设置下当前已干净，可删除 disable 并让警告影响退出码 |
+
+### 已验证为非问题（审计提出但实测不成立）
+
+- **离线指示灯颜色动画破坏绑定**：离屏实测 `SequentialAnimation on color` + `running` 停止后，`color:` 绑定会恢复（online 后颜色正确），无需改动。审计报告中该条（M1）不成立。
 
 ## 复现验证命令
 
@@ -79,37 +110,25 @@ python3 scripts/fw_helper.py get_strategies
 
 # 打包（注意：输出在仓库父目录，即工作区根目录）
 make pack
-# 或在项目内验证包内容而不写根目录：
-#   cp -r contents scripts metadata.json tmp/stage/<PKG_ID>/ && cd tmp/stage && tar ...
 ```
 
 无头预览/截图用 `tools/preview-headless.sh`（若存在）或按 `AGENTS.md` 的 Xvfb + `plasmoidviewer` 手动流程；截图只写 `tmp/`，用完删除。**不要**截用户桌面。
 
-## 已知问题 / 技术债
-
-1. **i18n 自造方案**：全项目用 `tr(en, zh)` + `Qt.locale()` 手写双语，没有 `i18n()`/po，不符合 KDE 翻译体系；要上 KDE Store 或接社区翻译需迁移（工作量大，涉及所有文案与 `config.qml`）。
-2. **CI lint 过滤规则偏宽**：`grep -viE "...cannot resolve alias..."` 等会掩盖真实告警；`.qmllint.ini` 的 `MaxWarnings=-1` 让本地 qmllint 有警告也返回 0，必须看输出不能只看 exit code。
-3. **`make pack` 写仓库父目录**：产物落在工作区根目录，与工作区“只在项目目录内写文件”的约定冲突；CI 依赖该路径，暂未改动，发布时注意清理。
-4. **配置页无自动化 UI 测试**：现有保障是 Python 单测 + 离屏 QML 测试脚本（脚本未入库）。QML 层逻辑（曲线排序、脏标记、重命名校验）可以做成 `tests/qml/` 的 `qmltestrunner` 用例。
-5. **helper 中少量英文硬编码**：如 `"Command failed"`、`"OK"`、`get_status` 的错误消息，直接显示在状态行；中文界面下不完全本地化。
-6. **README 截图是 2026-08 的旧图**：界面目前没有变化，可暂不更新；若发新版建议用无头预览重截。
-7. **网络**：本机当前 GitHub git/API 均不通（TLS/EOF），`git push` 会失败；推送前先确认网络。
-8. **配置编辑器交互细节**：曲线点 `TextField` 在 `onEditingFinished` 触发自动排序时会重建 delegate（失去焦点），属既有设计，未改动。
-
 ## 后续建议（按优先级）
 
-1. 发 v1.3.1：包含本轮 3 个提交，补 README 更新日志一条。
-2. 把离屏 QML 验证脚本整理进 `tests/qml/` 并接入 CI（`qmltestrunner`），覆盖曲线排序与脏标记。
-3. 增加 `make lint` / `make test` 统一本地入口，与 CI 命令保持一致。
-4. i18n 迁移（若计划上 KDE Store 或接受外部翻译）。
-5. KDE Store 提交流程：截图、描述、许可证标注。
-6. 用 `tools/preview-headless.sh`（若保留）更新 README 双语文截图。
+1. 发 v1.3.1：包含本轮 9 个提交，补 README 更新日志一条。
+2. CI 可信度：修审计的 H2（过滤规则）与 M8（包结构验证）。
+3. i18n 迁移决策（H3）：上 KDE Store / 接受社区翻译则必须做；否则在 README 说明。
+4. 用本轮离屏测试脚本沉淀 `tests/qml/` 用例（绑定同步、脏标记、曲线排序、名称校验）。
+5. 健壮性：`FwBackend` 看门狗（M3）、配置页命令防重入（M4）。
+6. 发布链路：`make` 默认目标与重启方式（M5）、install fallback 复制范围（M6）。
+7. 文档：README 中英同步、补 Development/Testing、保存语义说明（M12）。
 
 ## 回滚
 
 ```bash
 cd /home/iwinoid/Documents/项目/KDE/fw-fanctrl-kde
-git revert 58db4c1 9fff1b6 9ac28ca   # 逆序回滚本轮提交
+git revert 690e7c6 26731ab 2cd7610 9f79cc6 4c06cc8 26b227a 58db4c1 9fff1b6 9ac28ca
 ```
 
 安装/卸载（会写 `~/.local/share/plasma`，`make install` 默认重启 plasmashell，`RESTART=n make install` 可跳过）：
