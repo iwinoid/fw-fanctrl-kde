@@ -65,6 +65,13 @@ class RunJsonCommandTest(unittest.TestCase):
             result = fw_helper._run_json_command(["fw-fanctrl"])
         self.assertLessEqual(len(result["message"]), 400 + 1)  # one ellipsis char
 
+    def test_oserror(self):
+        with mock.patch.object(fw_helper.subprocess, "check_output",
+                               side_effect=OSError("cannot execute")):
+            result = fw_helper._run_json_command(["fw-fanctrl"])
+        self.assertFalse(result["success"])
+        self.assertIn("cannot execute", result["message"])
+
 
 class GetStatusTest(unittest.TestCase):
     def test_online(self):
@@ -220,6 +227,15 @@ class SendNotificationTest(unittest.TestCase):
         self.assertFalse(result["success"])
         self.assertIn("notify-send", result["message"])
 
+    def test_normal_urgency_and_argument_separator(self):
+        with mock.patch.object(fw_helper.subprocess, "run") as m:
+            fw_helper.send_notification("Title", "Body words")
+        args = m.call_args[0][0]
+        self.assertIn("-u", args)
+        self.assertEqual(args[args.index("-u") + 1], "normal")
+        self.assertIn("--", args)
+        self.assertEqual(args[-2:], ["Title", "Body words"])
+
     def test_timeout(self):
         with mock.patch.object(fw_helper.subprocess, "run",
                                side_effect=subprocess.TimeoutExpired("x", 5)):
@@ -272,6 +288,15 @@ class MainDispatchTest(unittest.TestCase):
             out = self.run_main(["set_strategy", "A", "B"])
             m.assert_called_once_with("A B")
         self.assertTrue(out["success"])
+
+    def test_set_strategy_missing_arg(self):
+        with self.assertRaises(SystemExit):
+            self.run_main(["set_strategy"])
+
+    def test_simple_command_dispatch(self):
+        with mock.patch.object(fw_helper, "do_reload",
+                               return_value={"success": True, "message": "Reloaded"}):
+            self.assertTrue(self.run_main(["reload"])["success"])
 
 
 if __name__ == "__main__":
