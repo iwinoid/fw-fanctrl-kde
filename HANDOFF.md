@@ -1,16 +1,16 @@
 # fw-fanctrl-kde 交接说明
 
-最后更新：2026-10-19。本轮（质量检查与修复）共 9 个提交：`9ac28ca`、`9fff1b6`、`58db4c1`、`26b227a`、`4c06cc8`、`9f79cc6`、`2cd7610`、`26731ab`、`690e7c6`；本文档的更新为单独提交。
+最后更新：2026-10-19。本轮（质量检查与修复）提交：`9ac28ca`、`9fff1b6`、`58db4c1`、`26b227a`、`4c06cc8`、`9f79cc6`、`2cd7610`、`26731ab`、`690e7c6`、`0a34eb8`；v1.3.1 版本提交 `004e2a0`（含 `v1.3.1` tag）；本文档的更新为单独提交。
 
 ## 一句话状态
 
-v1.3 功能完整、可运行；本轮完成质量检查、缺陷修复与交接。本机部件已安装、`fw-fanctrl` 服务运行中；`main` 领先 `origin/main`，网络恢复后需要推送。
+v1.3.1 维护版本，功能完整、可运行；本机部件已安装、`fw-fanctrl` 服务运行中；`main` 与 `v1.3.1` tag 领先 `origin/main`，网络恢复后需要推送并创建 GitHub Release。
 
 ## 项目与环境
 
 | 项 | 值 |
 |---|---|
-| 包 ID | `com.github.iwinoid.fw-fanctrl-kde`（`metadata.json` Version `1.3`） |
+| 包 ID | `com.github.iwinoid.fw-fanctrl-kde`（`metadata.json` Version `1.3.1`） |
 | 仓库 | 独立 git 仓库，分支 `main`；上游 `github.com/iwinoid/fw-fanctrl-kde` |
 | 运行环境 | Plasma 6.8.0 / Qt 6.12.0；`fw-fanctrl` 1.1.0，systemd 服务 `fw-fanctrl.service` active |
 | 配置文件 | `/etc/fw-fanctrl/config.json` 与 `config.schema.json`（服务所有，GUI 只经 CLI 读写） |
@@ -61,6 +61,7 @@ v1.3 功能完整、可运行；本轮完成质量检查、缺陷修复与交接
 | `2cd7610` | `fix(backend)`：离线通知改为每个离线周期只弹一次（原来每 60 秒一次），通知级别从 `critical` 降为 `normal` |
 | `26731ab` | `test`：补 `notify-send` 参数、`OSError`、`set_strategy` 缺参、简单命令 dispatch 测试 |
 | `690e7c6` | `ci`：Arch 容器无 git 会在 checkout 前失败，checkout 之前先 `pacman -Sy --needed --noconfirm git`（见 `ci.yml`） |
+| `004e2a0` | `v1.3.1`：`metadata.json` 升到 1.3.1，README 中英同步更新包名与更新日志，新增 `docs/release-notes-1.3.1.md`（Release 标题与正文，已建 tag `v1.3.1`） |
 
 ## 独立只读审计发现（尚未修复，按优先级）
 
@@ -116,7 +117,14 @@ make pack
 
 ## 后续建议（按优先级）
 
-1. 发 v1.3.1：包含本轮 9 个提交，补 README 更新日志一条。
+1. **发布 v1.3.1**（代码与 tag 已就绪，待网络恢复）：
+   ```bash
+   git push origin main && git push origin v1.3.1
+   make pack   # 产物在工作区根目录：com.github.iwinoid.fw-fanctrl-kde-1.3.1.tar.xz
+   gh release create v1.3.1 ../com.github.iwinoid.fw-fanctrl-kde-1.3.1.tar.xz \
+     --title "New Model, New Harness, New Standard (but no new ability)" \
+     --notes-file docs/release-notes-1.3.1.md
+   ```
 2. CI 可信度：修审计的 H2（过滤规则）与 M8（包结构验证）。
 3. i18n 迁移决策（H3）：上 KDE Store / 接受社区翻译则必须做；否则在 README 说明。
 4. 用本轮离屏测试脚本沉淀 `tests/qml/` 用例（绑定同步、脏标记、曲线排序、名称校验）。
@@ -128,7 +136,7 @@ make pack
 
 ```bash
 cd /home/iwinoid/Documents/项目/KDE/fw-fanctrl-kde
-git revert 690e7c6 26731ab 2cd7610 9f79cc6 4c06cc8 26b227a 58db4c1 9fff1b6 9ac28ca
+git revert 004e2a0 690e7c6 26731ab 2cd7610 9f79cc6 4c06cc8 26b227a 58db4c1 9fff1b6 9ac28ca
 ```
 
 安装/卸载（会写 `~/.local/share/plasma`，`make install` 默认重启 plasmashell，`RESTART=n make install` 可跳过）：
@@ -141,5 +149,6 @@ make uninstall   # 卸载
 ## 参考
 
 - `README.md` / `README.zh_CN.md`：用户向文档（standard-readme 结构）
+- `docs/release-notes-1.3.1.md`：v1.3.1 的 GitHub Release 标题与正文（`gh release create --notes-file` 直接使用）
 - `vendor/develop-kde-org/content/docs/plasma/widget/`：Plasmoid 教程与 API（工作区只读镜像）
 - `AGENTS.md`（工作区根目录）：环境、文档查阅、写文件范围与验证约定
