@@ -58,12 +58,12 @@
 
 ### 从 Release 安装
 
-1. 从 [Releases](https://github.com/iwinoid/fw-fanctrl-kde/releases) 页面下载 `com.github.iwinoid.fw-fanctrl-kde-1.3.tar.xz`。
+1. 从 [Releases](https://github.com/iwinoid/fw-fanctrl-kde/releases) 页面下载 `com.github.iwinoid.fw-fanctrl-kde-1.3.1.tar.xz`。
 2. 在 Plasma 里打开 **添加小部件 → 获取新小部件... → 从本地文件安装**，选择该包。
 3. 或用终端安装：
 
 ```bash
-kpackagetool6 --type=Plasma/Applet --install com.github.iwinoid.fw-fanctrl-kde-1.3.tar.xz
+kpackagetool6 --type=Plasma/Applet --install com.github.iwinoid.fw-fanctrl-kde-1.3.1.tar.xz
 ```
 
 
@@ -161,6 +161,7 @@ QML (小组件界面)  ──executable DataSource──▶  scripts/fw_helper.p
 
 ## 更新日志
 
+- **1.3.1** ： 维护版本：采用新的模型、新的 Harness 与新的标准，只修复潜在 bug，没有新功能
 - **1.3** ： 首个规范化版本：standard-readme 文档、QML 格式化与 lint 清零、单元测试、CI
 - **1.2.2** ： 用单色 SVG 图标替换 PNG 图标，服务异常时弹通知
 - **1.2.1** ： 修复曲线自动排序污染温度点、导致保存失败的问题

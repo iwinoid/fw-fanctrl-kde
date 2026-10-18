@@ -56,12 +56,12 @@ The kernel and Python minimum versions are inherited from fw-fanctrl.
 
 ### From Release
 
-1. Download `com.github.iwinoid.fw-fanctrl-kde-1.3.tar.xz` from the [Releases](https://github.com/iwinoid/fw-fanctrl-kde/releases) page.
+1. Download `com.github.iwinoid.fw-fanctrl-kde-1.3.1.tar.xz` from the [Releases](https://github.com/iwinoid/fw-fanctrl-kde/releases) page.
 2. In Plasma, open **Add Widgets → Get New Widgets... → Install from local file** and select the package.
 3. Or install from a terminal:
 
 ```bash
-kpackagetool6 --type=Plasma/Applet --install com.github.iwinoid.fw-fanctrl-kde-1.3.tar.xz
+kpackagetool6 --type=Plasma/Applet --install com.github.iwinoid.fw-fanctrl-kde-1.3.1.tar.xz
 ```
 
 ### From Source
@@ -158,6 +158,7 @@ This project follows a code-of-conduct style common to open source; be respectfu
 
 ## Changelog
 
+- **1.3.1** : maintenance release: new model, new Harness, new standard; potential bug fixes only, no new features
 - **1.3** : first normalized release: standard-readme docs, QML formatting and lint cleanup, unit tests, CI
 - **1.2.2** : replace the PNG icons with a monochrome SVG icon, notify when the service goes down
 - **1.2.1** — fix the curve auto-sort corrupting temperature points and blocking save
