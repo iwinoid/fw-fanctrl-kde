@@ -54,7 +54,9 @@ Item {
     property int curveVersion: 0
 
     function isValidStrategyName(name) {
-        return /^[a-zA-Z0-9_-]+$/.test(name);
+        // A leading '-' would be parsed as an option by fw-fanctrl's argparse,
+        // so such a strategy could never be activated.
+        return /^[a-zA-Z0-9_][a-zA-Z0-9_-]*$/.test(name);
     }
 
     function showStatus(message, success) {
@@ -114,6 +116,8 @@ Item {
             configLoaded = true;
             configLoadError = false;
             configChanged = false;
+            syncEditorControls();
+            syncStrategyReferences();
             statusText = "";
             statusSuccess = true;
         } else {
@@ -368,26 +372,48 @@ Item {
         if (newName === selectedStrategy)
             return;
         if (!isValidStrategyName(newName)) {
-            showStatus(tr("Invalid strategy name: only letters, numbers, '_' and '-' are allowed.", "策略名无效：只能包含字母、数字、下划线和连字符。"), false);
-            strategyNameField.text = Qt.binding(function () {
-                return root.selectedStrategy;
-            });
+            showStatus(tr("Invalid strategy name: use letters, numbers, '_' or '-', and do not start with '-'.", "策略名无效：只能包含字母、数字、下划线和连字符，且不能以连字符开头。"), false);
+            strategyNameField.text = root.selectedStrategy;
             return;
         }
 
         if (strategyNames.indexOf(newName) >= 0) {
             showStatus(tr("A strategy with this name already exists.", "同名策略已存在。"), false);
-            strategyNameField.text = Qt.binding(function () {
-                return root.selectedStrategy;
-            });
+            strategyNameField.text = root.selectedStrategy;
             return;
         }
 
         if (!renameStrategy(selectedStrategy, newName)) {
             showStatus(tr("Could not rename strategy.", "无法重命名策略。"), false);
-            strategyNameField.text = Qt.binding(function () {
-                return root.selectedStrategy;
-            });
+            strategyNameField.text = root.selectedStrategy;
+        }
+    }
+
+    // User interaction replaces QML bindings on the controls, so the editor is
+    // re-synced imperatively whenever the selection changes. Relying on
+    // `property: expression` bindings alone would leave stale spin box values
+    // after switching strategies, and the next spin box edit would then be
+    // written into the newly selected strategy.
+    function syncEditorControls() {
+        strategyNameField.text = selectedStrategy;
+        updateFrequencySpin.value = getStrategyValue("fanSpeedUpdateFrequency", 5);
+        movingAverageSpin.value = getStrategyValue("movingAverageInterval", 30);
+    }
+
+    function syncStrategyReferences() {
+        defaultStrategyCombo.currentIndex = strategyNames.indexOf(configData.defaultStrategy || "");
+        batteryStrategyCombo.currentIndex = strategyNames.indexOf(configData.strategyOnDischarging || "") + 1;
+    }
+
+    Connections {
+        target: root
+
+        function onSelectedStrategyChanged() {
+            root.syncEditorControls();
+        }
+
+        function onStrategyNamesChanged() {
+            root.syncStrategyReferences();
         }
     }
 
@@ -640,7 +666,7 @@ Item {
                                     Layout.fillWidth: true
                                     text: root.selectedStrategy
                                     validator: RegularExpressionValidator {
-                                        regularExpression: /^[a-zA-Z0-9_-]+$/
+                                        regularExpression: /^[a-zA-Z0-9_][a-zA-Z0-9_-]*$/
                                     }
                                     onEditingFinished: root.commitStrategyRename()
                                 }
@@ -649,6 +675,7 @@ Item {
                                     text: root.tr("Update Freq (s):", "更新频率(秒):")
                                 }
                                 Controls.SpinBox {
+                                    id: updateFrequencySpin
                                     from: 1
                                     to: 10
                                     value: root.getStrategyValue("fanSpeedUpdateFrequency", 5)
@@ -660,6 +687,7 @@ Item {
                                     text: root.tr("Moving Avg (s):", "移动平均(秒):")
                                 }
                                 Controls.SpinBox {
+                                    id: movingAverageSpin
                                     from: 1
                                     to: 100
                                     value: root.getStrategyValue("movingAverageInterval", 30)
@@ -795,6 +823,7 @@ Item {
                             text: root.tr("Default:", "默认:")
                         }
                         Controls.ComboBox {
+                            id: defaultStrategyCombo
                             Layout.fillWidth: true
                             model: root.strategyNames
                             currentIndex: root.strategyNames.indexOf(root.configData.defaultStrategy || "")
@@ -810,6 +839,7 @@ Item {
                             text: root.tr("Battery:", "电池:")
                         }
                         Controls.ComboBox {
+                            id: batteryStrategyCombo
                             Layout.fillWidth: true
                             model: [""].concat(root.strategyNames)
                             currentIndex: root.strategyNames.indexOf(root.configData.strategyOnDischarging || "") + 1
@@ -887,7 +917,7 @@ Item {
                 Layout.fillWidth: true
                 placeholderText: "MyCustom"
                 validator: RegularExpressionValidator {
-                    regularExpression: /^[a-zA-Z0-9_-]+$/
+                    regularExpression: /^[a-zA-Z0-9_][a-zA-Z0-9_-]*$/
                 }
             }
 
