@@ -37,7 +37,7 @@ Item {
     property bool m_statusPending: false
     property string m_pendingStrategy: ""
     property int m_offlineStreak: 0
-    property int m_notifyCooldown: 0
+    property bool m_offlineNotified: false
 
     readonly property bool isChinese: Qt.locale().name.startsWith("zh")
     function tr(en, zh) {
@@ -153,15 +153,16 @@ Item {
     function trackOffline() {
         if (m_online) {
             m_offlineStreak = 0;
+            m_offlineNotified = false;
         } else {
             m_offlineStreak++;
-            if (m_offlineStreak >= 3 && m_notifyCooldown <= 0) {
-                m_notifyCooldown = 30;
+            // Notify once per offline episode: a missing fw-fanctrl must not
+            // keep popping critical notifications every minute.
+            if (m_offlineStreak >= 3 && !m_offlineNotified) {
+                m_offlineNotified = true;
                 serviceOfflineNotice(m_lastMessage || tr("fw-fanctrl unavailable", "fw-fanctrl 不可用"));
             }
         }
-        if (m_notifyCooldown > 0)
-            m_notifyCooldown--;
     }
 
     function handleResult(command, stdout, stderr, exitCode) {

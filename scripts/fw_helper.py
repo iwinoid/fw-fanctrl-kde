@@ -197,7 +197,7 @@ def send_notification(title, body):
     try:
         subprocess.run(
             ["notify-send", "-a", "fw-fanctrl", "-i", "computer-fan",
-             "-u", "critical", "--", title, body],
+             "-u", "normal", "--", title, body],
             timeout=5,
             check=False,
         )
