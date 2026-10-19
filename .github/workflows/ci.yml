@@ -31,6 +31,9 @@ jobs:
       - name: qmllint
         # Tolerate only the OsdWindow / missing-workspace-osd-module cascade
         # and generic module-load noise. Any real code problem must fail.
+        # Note: when a type is unresolved, "Member ... not found" warnings carry
+        # no type name, hence the last filter. Real missing-property warnings
+        # include the type name and still fail the job.
         run: |
           set -euo pipefail
           /usr/lib/qt6/bin/qmllint \
@@ -40,6 +43,7 @@ jobs:
           grep -E "^(Warning|Error)" /tmp/lint.log \
             | grep -viE "(org\.kde\.plasma\.workspace\.osd|OsdWindow|osdValue|osdContent|showingProgress|osdPopup)" \
             | grep -viE "(failed to import|warnings occurred while importing|is not resolved|was not found|is not installed|not found in any|no qualifying module|unknown attached property scope|unknown grouped property scope|import failure|cannot resolve alias)" \
+            | grep -viE "not found on type \[missing-property\]" \
             > /tmp/real.log || true
           if [ -s /tmp/real.log ]; then
             echo "qmllint found real problems:"
