@@ -4,7 +4,7 @@
 
 ## 一句话状态
 
-v1.3.1 维护版本已发布：GitHub Release 已创建、资产上传并与本地 sha256 核对一致；`fw-fanctrl` 服务运行中。`main` 比 `origin/main` 多 2 个提交（`fe82ecc` 打包排除修复 + 本文档更新），GitHub 的 git 通道当前被网络拦截，恢复后补推。本机系统里安装的仍是发布前的代码（只验证到隔离安装），需要时执行 `make install`。
+v1.3.1 维护版本已发布：GitHub Release 已创建、资产上传并与本地 sha256 核对一致；本机已通过 `kpackagetool6 --upgrade` 把 1.3.1 装到 `~/.local/share/plasma/plasmoids/`，`plasma-plasmashell.service` 已重启加载新版本，`fw-fanctrl` 服务运行中。CI 已修复并通过（`5707d0f`：QML lint 与 Python/packaging 两个 job 均 success）。工作区与 `origin/main` 同步。
 
 ## 项目与环境
 
@@ -63,6 +63,7 @@ v1.3.1 维护版本已发布：GitHub Release 已创建、资产上传并与本�
 | `690e7c6` | `ci`：Arch 容器无 git 会在 checkout 前失败，checkout 之前先 `pacman -Sy --needed --noconfirm git`（见 `ci.yml`） |
 | `004e2a0` | `v1.3.1`：`metadata.json` 升到 1.3.1，README 中英同步更新包名与更新日志，新增 `docs/release-notes-1.3.1.md`（Release 标题与正文，已建 tag `v1.3.1`） |
 | `fe82ecc` | `build(pack)`：发布包排除 `HANDOFF.md` 与 `docs/`（开发文档不入包），CI 的包内容检查同步覆盖这两类 |
+| `5707d0f` | `ci(qml-lint)`：CI 容器未装 `plasma-workspace`，`OsdWindow` 因此未解析，qmllint 会报两条无类型名的成员缺失警告；只过滤这一种形态，真正的 missing-property 仍会让 job 失败 |
 
 ## 独立只读审计发现（尚未修复，按优先级）
 
@@ -118,11 +119,12 @@ make pack
 
 ## 后续建议（按优先级）
 
-1. **v1.3.1 已发布**：<https://github.com/iwinoid/fw-fanctrl-kde/releases/tag/v1.3.1>（tag `v1.3.1` 指向 `004e2a0`，资产 sha256 已与本地核对）。剩余唯一动作是补推 `main`（网络恢复后）：
+1. **v1.3.1 已完成发布与安装**：<https://github.com/iwinoid/fw-fanctrl-kde/releases/tag/v1.3.1>（tag `v1.3.1` 指向 `004e2a0`，资产 sha256 已核对）；本机系统已装 1.3.1 并重启 plasmashell 加载，CI 绿灯，无待办动作。重装/卸载：
    ```bash
-   git push origin main
+   kpackagetool6 --type=Plasma/Applet --upgrade ../com.github.iwinoid.fw-fanctrl-kde-1.3.1.tar.xz
+   kpackagetool6 --type=Plasma/Applet --remove com.github.iwinoid.fw-fanctrl-kde
    ```
-   本机安装到系统仍是旧代码，需要时 `make install`。
+   网络注意：本机 `github.com:443` 常被拦截，`git push`/`git fetch` 需要网络窗口，或用本地 CONNECT 隧道绕行可达边缘 IP。
 2. CI 可信度：修审计的 H2（过滤规则）与 M8（包结构验证）。
 3. i18n 迁移决策（H3）：上 KDE Store / 接受社区翻译则必须做；否则在 README 说明。
 4. 用本轮离屏测试脚本沉淀 `tests/qml/` 用例（绑定同步、脏标记、曲线排序、名称校验）。
@@ -134,7 +136,7 @@ make pack
 
 ```bash
 cd /home/iwinoid/Documents/项目/KDE/fw-fanctrl-kde
-git revert fe82ecc 004e2a0 690e7c6 26731ab 2cd7610 9f79cc6 4c06cc8 26b227a 58db4c1 9fff1b6 9ac28ca
+git revert 5707d0f fe82ecc 004e2a0 690e7c6 26731ab 2cd7610 9f79cc6 4c06cc8 26b227a 58db4c1 9fff1b6 9ac28ca
 ```
 
 安装/卸载（会写 `~/.local/share/plasma`，`make install` 默认重启 plasmashell，`RESTART=n make install` 可跳过）：
