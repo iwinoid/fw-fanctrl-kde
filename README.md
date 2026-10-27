@@ -56,12 +56,12 @@ The kernel and Python minimum versions are inherited from fw-fanctrl.
 
 ### From Release
 
-1. Download `com.github.iwinoid.fw-fanctrl-kde-1.3.1.tar.xz` from the [Releases](https://github.com/iwinoid/fw-fanctrl-kde/releases) page.
+1. Download `com.github.iwinoid.fw-fanctrl-kde-1.3.2.tar.xz` from the [Releases](https://github.com/iwinoid/fw-fanctrl-kde/releases) page.
 2. In Plasma, open **Add Widgets → Get New Widgets... → Install from local file** and select the package.
 3. Or install from a terminal:
 
 ```bash
-kpackagetool6 --type=Plasma/Applet --install com.github.iwinoid.fw-fanctrl-kde-1.3.1.tar.xz
+kpackagetool6 --type=Plasma/Applet --install com.github.iwinoid.fw-fanctrl-kde-1.3.2.tar.xz
 ```
 
 ### From Source
@@ -72,7 +72,7 @@ cd fw-fanctrl-kde
 make install
 ```
 
-`make install` builds the release archive (`../com.github.iwinoid.fw-fanctrl-kde-1.3.1.tar.xz`) and installs that archive through `kpackagetool6`, so only runtime files are installed. Reinstalling upgrades the existing package; a failed installation stops with the real error. Plasma is not restarted by default: run `make restart-plasma`, or use `RESTART=y make install`. `make reinstall` reinstalls, `make uninstall` removes the widget, `make pack` only builds the archive, and `make lint` runs the same strict qmllint check as CI.
+`make install` builds the release archive (`../com.github.iwinoid.fw-fanctrl-kde-1.3.2.tar.xz`) and installs that archive through `kpackagetool6`, so only runtime files are installed. Reinstalling upgrades the existing package; a failed installation stops with the real error. Plasma is not restarted by default: run `make restart-plasma`, or use `RESTART=y make install`. `make reinstall` reinstalls, `make uninstall` removes the widget, `make pack` only builds the archive, and `make lint` runs the same strict qmllint check as CI.
 
 ### Uninstall
 
@@ -161,6 +161,7 @@ This project follows a code-of-conduct style common to open source; be respectfu
 
 ## Changelog
 
+- **1.3.2** : fix saving from the Plasma configuration dialog and the 4 KB save limit; install from the release archive; make the lint gate trustworthy
 - **1.3.1** : maintenance release: new model, new Harness, new standard; potential bug fixes only, no new features
 - **1.3** : first normalized release: standard-readme docs, QML formatting and lint cleanup, unit tests, CI
 - **1.2.2** : replace the PNG icons with a monochrome SVG icon, notify when the service goes down

@@ -58,14 +58,13 @@
 
 ### 从 Release 安装
 
-1. 从 [Releases](https://github.com/iwinoid/fw-fanctrl-kde/releases) 页面下载 `com.github.iwinoid.fw-fanctrl-kde-1.3.1.tar.xz`。
+1. 从 [Releases](https://github.com/iwinoid/fw-fanctrl-kde/releases) 页面下载 `com.github.iwinoid.fw-fanctrl-kde-1.3.2.tar.xz`。
 2. 在 Plasma 里打开 **添加小部件 → 获取新小部件... → 从本地文件安装**，选择该包。
 3. 或用终端安装：
 
 ```bash
-kpackagetool6 --type=Plasma/Applet --install com.github.iwinoid.fw-fanctrl-kde-1.3.1.tar.xz
+kpackagetool6 --type=Plasma/Applet --install com.github.iwinoid.fw-fanctrl-kde-1.3.2.tar.xz
 ```
-
 
 ### 从源码安装
 
@@ -75,7 +74,7 @@ cd fw-fanctrl-kde
 make install
 ```
 
-`make install` 先生成发布归档（`../com.github.iwinoid.fw-fanctrl-kde-1.3.1.tar.xz`），再从归档通过 `kpackagetool6` 安装，所以只会装运行时文件。重装会升级已有包；安装失败会带着真实错误停止。默认不重启 Plasma：需要时运行 `make restart-plasma`，或用 `RESTART=y make install`。`make reinstall` 重装，`make uninstall` 卸载，`make pack` 只打包，`make lint` 跑与 CI 相同的严格 qmllint 检查。
+`make install` 先生成发布归档（`../com.github.iwinoid.fw-fanctrl-kde-1.3.2.tar.xz`），再从归档通过 `kpackagetool6` 安装，所以只会装运行时文件。重装会升级已有包；安装失败会带着真实错误停止。默认不重启 Plasma：需要时运行 `make restart-plasma`，或用 `RESTART=y make install`。`make reinstall` 重装，`make uninstall` 卸载，`make pack` 只打包，`make lint` 跑与 CI 相同的严格 qmllint 检查。
 
 ### 卸载
 
@@ -164,6 +163,7 @@ QML (小组件界面)  ──executable DataSource──▶  scripts/fw_helper.p
 
 ## 更新日志
 
+- **1.3.2** ： 修复配置对话框不保存、超过 4 KB 的配置无法保存的问题；改为从发布归档安装；让 lint 门禁可信
 - **1.3.1** ： 维护版本：采用新的模型、新的 Harness 与新的标准，只修复潜在 bug，没有新功能
 - **1.3** ： 首个规范化版本：standard-readme 文档、QML 格式化与 lint 清零、单元测试、CI
 - **1.2.2** ： 用单色 SVG 图标替换 PNG 图标，服务异常时弹通知
