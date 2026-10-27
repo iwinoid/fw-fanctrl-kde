@@ -100,26 +100,30 @@ jobs:
 
       - name: Build package and install it with kpackagetool6
         # The only place that exercises real KF6 package handling: metadata,
-        # KPackageStructure and the runtime file layout. Both the fresh-install
-        # and the upgrade path that `make install` uses are covered.
+        # KPackageStructure and the runtime file layout. The install goes to a
+        # temporary XDG_DATA_HOME, which is exactly the path `make install` uses
+        # in a real session; `--packageroot <tmp>` is deliberately not used
+        # because newer KPackage versions cannot find the package there for
+        # `--upgrade`.
         run: |
           set -euo pipefail
           make pack
           pkg="../${PLASMOID_ID}-$(python3 -c 'import json; print(json.load(open("metadata.json"))["KPlugin"]["Version"])').tar.xz"
           echo "package: $pkg ($(du -h "$pkg" | cut -f1))"
-          packageroot="$PWD/tmp/packageroot"
-          rm -rf "$packageroot"
-          mkdir -p "$packageroot"
-          kpackagetool6 --packageroot "$packageroot" --type=Plasma/Applet --install "$pkg"
-          test -f "$packageroot/$PLASMOID_ID/metadata.json"
-          test -x "$packageroot/$PLASMOID_ID/scripts/fw_helper.py"
-          kpackagetool6 --packageroot "$packageroot" --type=Plasma/Applet --upgrade "$pkg"
-          test -f "$packageroot/$PLASMOID_ID/metadata.json"
-          test -x "$packageroot/$PLASMOID_ID/scripts/fw_helper.py"
+          export XDG_DATA_HOME="$PWD/tmp/xdg-data"
+          rm -rf "$XDG_DATA_HOME"
+          mkdir -p "$XDG_DATA_HOME"
+          installed="$XDG_DATA_HOME/plasma/plasmoids/$PLASMOID_ID"
+          kpackagetool6 --type=Plasma/Applet --install "$pkg"
+          test -f "$installed/metadata.json"
+          test -x "$installed/scripts/fw_helper.py"
+          kpackagetool6 --type=Plasma/Applet --upgrade "$pkg"
+          test -f "$installed/metadata.json"
+          test -x "$installed/scripts/fw_helper.py"
           # Development files must never reach the installed package.
-          test ! -e "$packageroot/$PLASMOID_ID/tests"
-          test ! -e "$packageroot/$PLASMOID_ID/docs"
-          test ! -e "$packageroot/$PLASMOID_ID/image"
+          test ! -e "$installed/tests"
+          test ! -e "$installed/docs"
+          test ! -e "$installed/image"
           echo "kpackagetool6 install/upgrade OK"
 
   python-tests:
