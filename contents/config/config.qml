@@ -10,7 +10,7 @@ ConfigModel {
 
     ConfigCategory {
         name: configModel.tr("Fan Curves", "风扇曲线")
-        icon: "computer-fan"
+        icon: "speedometer"
         source: "configCurves.qml"
     }
 }

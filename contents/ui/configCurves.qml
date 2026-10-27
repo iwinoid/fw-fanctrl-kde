@@ -53,6 +53,21 @@ Item {
     property bool statusSuccess: true
     property int curveVersion: 0
 
+    // Dialog contract: the Plasma configuration dialog injects cfg_* values
+    // from Plasmoid.configuration and writes them back on Apply/OK, calls
+    // saveConfig() and enables its Apply button from unsavedChanges /
+    // configurationChanged. Without them edits made here were silently thrown
+    // away when the dialog was closed.
+    property string cfg_pendingSave: ""
+
+    signal configurationChanged()
+
+    property bool unsavedChanges: configChanged
+    onConfigChangedChanged: {
+        if (configChanged)
+            configurationChanged();
+    }
+
     function isValidStrategyName(name) {
         // A leading '-' would be parsed as an option by fw-fanctrl's argparse,
         // so such a strategy could never be activated.
@@ -109,7 +124,7 @@ Item {
     function handleConfig(stdout, stderr, exitCode) {
         var data = parseJSON(stdout);
         if (data && data.config) {
-            var previous = selectedStrategy;
+            const previous = selectedStrategy;
             configData = data.config;
             refreshStrategyList();
             selectedStrategy = strategyNames.indexOf(previous) >= 0 ? previous : (strategyNames.length > 0 ? strategyNames[0] : "");
@@ -142,7 +157,7 @@ Item {
 
     function refreshStrategyList() {
         var names = [];
-        for (var key in configData.strategies) {
+        for (const key in configData.strategies) {
             if (configData.strategies.hasOwnProperty(key))
                 names.push(key);
         }
@@ -152,7 +167,7 @@ Item {
 
     function syncStrategyModel() {
         strategyListModel.clear();
-        for (var i = 0; i < strategyNames.length; i++)
+        for (let i = 0; i < strategyNames.length; i++)
             strategyListModel.append({
                 name: strategyNames[i]
             });
@@ -160,14 +175,14 @@ Item {
 
     function finalizeStrategyOrder() {
         var ordered = [];
-        for (var i = 0; i < strategyListModel.count; i++)
+        for (let i = 0; i < strategyListModel.count; i++)
             ordered.push(strategyListModel.get(i).name);
 
         if (JSON.stringify(ordered) === JSON.stringify(strategyNames))
             return;
         var newStrategies = {};
-        for (var j = 0; j < ordered.length; j++) {
-            var key = ordered[j];
+        for (let j = 0; j < ordered.length; j++) {
+            const key = ordered[j];
             if (configData.strategies && configData.strategies.hasOwnProperty(key))
                 newStrategies[key] = configData.strategies[key];
         }
@@ -240,17 +255,20 @@ Item {
                 speed: p.speed
             };
         });
-        for (var i = 0; i < pts.length; i++) {
+        for (let i = 0; i < pts.length; i++) {
             pts[i].temp = values[i].temp;
             pts[i].speed = values[i].speed;
         }
         curveVersion++;
+        // Typing a temperature can sort the curve without changing any value
+        // (e.g. focus in/out); the new order still has to be written back.
+        configChanged = true;
     }
 
     function curveMaxTemp() {
         var pts = getCurvePoints();
         var maxTemp = -1;
-        for (var i = 0; i < pts.length; i++)
+        for (let i = 0; i < pts.length; i++)
             maxTemp = Math.max(maxTemp, Number(pts[i].temp) || 0);
         return maxTemp;
     }
@@ -422,15 +440,15 @@ Item {
             return tr("No strategies configured", "没有配置任何策略");
 
         var changed = false;
-        for (var key in configData.strategies) {
+        for (const key in configData.strategies) {
             if (!configData.strategies.hasOwnProperty(key))
                 continue;
-            var strategy = configData.strategies[key];
+            const strategy = configData.strategies[key];
             if (!strategy || !Array.isArray(strategy.speedCurve) || strategy.speedCurve.length === 0)
                 return tr("Strategy '%1' has no speed curve", "策略 '%1' 没有速度曲线").arg(key);
 
-            var sorted = sortPoints(strategy.speedCurve);
-            for (var i = 1; i < sorted.length; i++) {
+            const sorted = sortPoints(strategy.speedCurve);
+            for (let i = 1; i < sorted.length; i++) {
                 if (Math.abs(Number(sorted[i].temp) - Number(sorted[i - 1].temp)) < 0.001)
                     return tr("Strategy '%1' has duplicate temperature points", "策略 '%1' 存在重复的温度点").arg(key);
             }
@@ -457,16 +475,12 @@ Item {
     }
 
     function saveConfigData() {
-        var curveError = validateAndNormalizeCurves();
-        if (curveError) {
-            showStatus(curveError, false);
-            return;
-        }
-
-        var referenceError = validateReferences();
-        if (referenceError) {
-            showStatus(referenceError, false);
-            return;
+        var error = validateAndNormalizeCurves();
+        if (!error)
+            error = validateReferences();
+        if (error) {
+            showStatus(error, false);
+            return false;
         }
 
         saving = true;
@@ -474,6 +488,30 @@ Item {
         statusSuccess = true;
         var json = JSON.stringify(configData, null, 4);
         executor.exec("save_config", shellQuote(json));
+        return true;
+    }
+
+    // Called by the Plasma configuration dialog's Apply/OK button.  The dialog
+    // destroys this page right after OK, which would kill an asynchronous
+    // fw-fanctrl call (plasma5support kills the child when the DataSource dies),
+    // so the JSON is staged in plasmoid.configuration.pendingSave and applied
+    // by the applet once the dialog has written the config.
+    function saveConfig() {
+        if (!configChanged)
+            return;
+        var error = validateAndNormalizeCurves();
+        if (!error)
+            error = validateReferences();
+        if (error) {
+            showStatus(error, false);
+            // The dialog closes right after OK: a status line would be lost.
+            executor.exec("notify", shellQuote(tr("Configuration not saved", "配置未保存")) + " " + shellQuote(error));
+            return;
+        }
+        cfg_pendingSave = JSON.stringify(configData, null, 4);
+        configChanged = false;
+        statusText = tr("Changes will be applied by the applet.", "改动将由小部件保存。");
+        statusSuccess = true;
     }
 
     function retryLoadConfig() {
@@ -710,7 +748,10 @@ Item {
                                 }
                                 Controls.ToolButton {
                                     icon.name: "list-add"
-                                    enabled: root.curveMaxTemp() < 100
+                                    // Points are edited in place, so curveVersion
+                                    // is read here to re-evaluate this binding
+                                    // when a point is added or removed.
+                                    enabled: root.curveVersion >= 0 && root.curveMaxTemp() < 100
                                     onClicked: root.addCurvePoint()
                                     Controls.ToolTip {
                                         text: root.tr("Add point", "添加点")
@@ -732,7 +773,9 @@ Item {
 
                                     Repeater {
                                         model: {
-                                            root.curveVersion;
+                                            // Points are edited in place; reading
+                                            // curveVersion rebuilds the delegates.
+                                            void root.curveVersion;
                                             return root.getCurvePoints();
                                         }
 

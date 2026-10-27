@@ -5,8 +5,11 @@
                           http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
     <kcfgfile name=""/>
     <group name="General">
-        <entry name="_dummy" type="Bool">
-            <default>true</default>
+        <!-- The configuration dialog cannot save asynchronously (its page is
+             destroyed on OK), so the curve editor stages the pending JSON here
+             and the applet applies it through scripts/fw_helper.py. -->
+        <entry name="pendingSave" type="String">
+            <default></default>
         </entry>
     </group>
 </kcfg>

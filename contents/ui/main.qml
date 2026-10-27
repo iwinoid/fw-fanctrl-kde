@@ -54,6 +54,34 @@ PlasmoidItem {
 
     property bool statusMessageHidden: false
 
+    // The configuration dialog cannot save asynchronously (its page is
+    // destroyed on OK), so it stages the JSON in plasmoid.configuration and the
+    // applet applies it through the helper.
+    function applyPendingSave() {
+        // Dynamic KConfigPropertyMap keys are not part of qmllint's type info.
+        // qmllint disable missing-property
+        var pending = Plasmoid.configuration.pendingSave;
+        if (!pending)
+            return;
+        if (backend.saveConfig(pending)) {
+            Plasmoid.configuration.pendingSave = "";
+            Plasmoid.configuration.writeConfig();
+        }
+        // qmllint enable missing-property
+    }
+
+    onExpandedChanged: {
+        if (expanded) {
+            applyPendingSave();
+            // A message that arrived while the popup was collapsed was not
+            // visible; show it for the usual 4s once the user opens the popup.
+            if (backend.lastMessage.length > 0) {
+                statusMessageHidden = false;
+                msgTimer.restart();
+            }
+        }
+    }
+
     // ─── Backend ──────────────────────────────────────────────────
     FwBackend {
         id: backend
@@ -65,11 +93,35 @@ PlasmoidItem {
         }
     }
 
+    // Status messages must outlive the popup: fullRepresentation (and anything
+    // declared inside it) is destroyed when the popup collapses.
+    Connections {
+        target: backend
+        function onLastMessageChanged() {
+            root.statusMessageHidden = false;
+            if (root.expanded)
+                msgTimer.restart();
+        }
+        function onStatusPolled() {
+            root.applyPendingSave();
+        }
+    }
+
+    Timer {
+        id: msgTimer
+        interval: 4000
+        onTriggered: root.statusMessageHidden = true
+    }
+
     // ─── Plasmoid Configuration ───────────────────────────────────
     readonly property string widgetIcon: Qt.resolvedUrl("../images/fan.svg")
 
     Plasmoid.icon: widgetIcon
     Plasmoid.status: backend.online ? PlasmaCore.Types.ActiveStatus : PlasmaCore.Types.PassiveStatus
+
+    // A staged configuration may already be waiting (e.g. the applet was
+    // restarted between the dialog writing it and the helper applying it).
+    Component.onCompleted: applyPendingSave()
 
     toolTipItem: ColumnLayout {
         spacing: Kirigami.Units.smallSpacing
@@ -80,7 +132,7 @@ PlasmoidItem {
         }
 
         Controls.Label {
-            text: backend.online ? root.tr("%1°C · %2%", "%1°C · %2%").arg(backend.temperature.toFixed(1)).arg(backend.fanSpeed) : ""
+            text: backend.online ? root.tr("%1°C · %2%", "%1°C · %2%").arg(backend.temperature >= 0 ? backend.temperature.toFixed(1) : "--").arg(backend.fanSpeed) : ""
             opacity: 0.7
             visible: backend.online
         }
@@ -90,6 +142,8 @@ PlasmoidItem {
     compactRepresentation: MouseArea {
         id: compactArea
         anchors.fill: parent
+        implicitWidth: Kirigami.Units.iconSizes.medium
+        implicitHeight: Kirigami.Units.iconSizes.medium
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton
 
@@ -136,6 +190,16 @@ PlasmoidItem {
         implicitHeight: Kirigami.Units.gridUnit * 22
 
         spacing: Kirigami.Units.smallSpacing
+
+        // Dragging the slider replaces its value binding, so resync it from the
+        // backend's real strategy whenever a change lands or is rejected.
+        function syncStrategySlider() {
+            if (strategySlider.pressed)
+                return;
+            var idx = backend.strategies.indexOf(backend.currentStrategy);
+            if (idx >= 0 && strategySlider.value !== idx)
+                strategySlider.value = idx;
+        }
 
         // ── Strategy Slider (KDE OSD style) ───────────────────────
         RowLayout {
@@ -188,7 +252,9 @@ PlasmoidItem {
                         to: Math.max(0, backend.strategies.length - 1)
                         stepSize: 1
                         snapMode: Controls.Slider.SnapAlways
-                        enabled: backend.online && backend.strategies.length > 0
+                        // Disabled while a command is in flight, otherwise a
+                        // second move would be dropped silently by the backend.
+                        enabled: backend.online && !backend.busy && backend.strategies.length > 0
                         value: {
                             var idx = backend.strategies.indexOf(backend.currentStrategy);
                             return idx >= 0 ? idx : 0;
@@ -209,10 +275,14 @@ PlasmoidItem {
                         target: backend
 
                         function onCurrentStrategyChanged() {
-                            if (strategySlider.pressed)
-                                return;
+                            mainLayout.syncStrategySlider();
+                        }
+
+                        function onStrategyRejected() {
+                            // A refused/failed set_strategy leaves the slider on
+                            // a strategy that is not active: move it back.
                             var idx = backend.strategies.indexOf(backend.currentStrategy);
-                            if (idx >= 0 && strategySlider.value !== idx)
+                            if (idx >= 0)
                                 strategySlider.value = idx;
                         }
                     }
@@ -301,7 +371,7 @@ PlasmoidItem {
                         Layout.fillWidth: true
                     }
                     Controls.Label {
-                        text: root.tr("%1°C", "%1°C").arg(backend.temperature.toFixed(1))
+                        text: root.tr("%1°C", "%1°C").arg(backend.temperature >= 0 ? backend.temperature.toFixed(1) : "--")
                         font.pointSize: Kirigami.Theme.smallFont.pointSize
                         opacity: 0.7
                     }
@@ -434,20 +504,6 @@ PlasmoidItem {
                     duration: 200
                 }
             }
-        }
-
-        Connections {
-            target: backend
-            function onLastMessageChanged() {
-                root.statusMessageHidden = false;
-                msgTimer.restart();
-            }
-        }
-
-        Timer {
-            id: msgTimer
-            interval: 4000
-            onTriggered: root.statusMessageHidden = true
         }
 
         // ── Loading Indicator ─────────────────────────────────────

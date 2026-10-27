@@ -29,7 +29,8 @@ Item {
     property bool m_active: false
     property string m_currentStrategy: ""
     property var m_strategies: []
-    property real m_temperature: 0
+    // -1 means "not reported by fw-fanctrl"; 0 is a valid temperature.
+    property real m_temperature: -1
     property int m_fanSpeed: 0
     property string m_lastMessage: ""
     property bool m_lastSuccess: true
@@ -45,8 +46,18 @@ Item {
     }
 
     // Emitted when the service has been offline for several consecutive
-    // polls and enough time has passed since the last notice (rate-limited).
+    // polls; at most once per offline episode (see trackOffline()).
     signal serviceOfflineNotice(string reason)
+
+    // Emitted when a strategy change was not applied: either the backend
+    // refused it (offline / another command in flight) or the helper reported
+    // a failure. The UI uses this to put the slider back on the real strategy.
+    signal strategyRejected(string name)
+
+    // Emitted after every finished status poll (online and offline), so the
+    // applet can apply a configuration staged by the configuration dialog
+    // without running its own timer.
+    signal statusPolled()
 
     readonly property string helperScript: decodeURIComponent(Qt.resolvedUrl("../../scripts/fw_helper.py").toString().replace("file://", ""))
 
@@ -71,18 +82,22 @@ Item {
         return line;
     }
 
+    // Returns false when the command was dropped because another one is still
+    // in flight; callers that need to know must look at the return value
+    // instead of relying on silence.
     function execCommand(cmd, arg) {
         if (cmd === "get_status") {
             if (m_statusPending)
-                return;
+                return false;
             m_statusPending = true;
         } else {
             if (m_busy)
-                return;
+                return false;
             m_busy = true;
         }
 
         executor.connectSource(commandLine(cmd, arg));
+        return true;
     }
 
     // ─── Executable DataSource ────────────────────────────────────
@@ -120,8 +135,15 @@ Item {
         m_statusPending = false;
         var data = parseJSON(stdout);
         if (!data || data.error) {
-            setOffline(data ? data.error : stderr);
+            // Never surface raw helper/CLI stderr (it can be a shell error or a
+            // JSON blob): keep the detail in the journal, show a stable text.
+            if (data && data.error)
+                console.warn("fw-fanctrl status error:", data.error);
+            else if (stderr)
+                console.warn("fw-fanctrl status stderr:", stderr);
+            setOffline();
             trackOffline();
+            statusPolled();
             return;
         }
 
@@ -129,27 +151,28 @@ Item {
 
         if (m_online) {
             m_active = data.active === true;
-            if (data.currentStrategy !== undefined)
-                m_currentStrategy = data.currentStrategy;
-            if (data.temperature !== undefined)
-                m_temperature = data.temperature;
-            if (data.fanSpeed !== undefined)
-                m_fanSpeed = data.fanSpeed;
+            if (data.currentStrategy !== undefined && data.currentStrategy !== null)
+                m_currentStrategy = String(data.currentStrategy);
+            // A missing temperature must not be shown as 0.0°C; null is also
+            // what the helper sends when fw-fanctrl does not report it.
+            m_temperature = typeof data.temperature === "number" ? data.temperature : -1;
+            m_fanSpeed = typeof data.fanSpeed === "number" ? data.fanSpeed : 0;
             if (data.strategies !== undefined && JSON.stringify(data.strategies) !== JSON.stringify(m_strategies))
                 m_strategies = data.strategies;
         } else {
             m_active = false;
             m_currentStrategy = "";
             m_strategies = [];
-            m_temperature = 0;
+            m_temperature = -1;
             m_fanSpeed = 0;
         }
 
         trackOffline();
+        statusPolled();
     }
 
-    // Offline detection: notify only after 3 consecutive failed polls
-    // (~6s), and never more than once per 60s.
+    // Offline detection: notify only after 3 consecutive failed polls (~6s),
+    // and only once per offline episode.
     function trackOffline() {
         if (m_online) {
             m_offlineStreak = 0;
@@ -177,28 +200,31 @@ Item {
             m_lastMessage = m_lastSuccess ? (stdout || "OK") : (stderr || "Command failed");
         }
 
-        if (command === "set_strategy") {
-            if (m_lastSuccess && m_pendingStrategy !== "")
-                strategyApplied(m_pendingStrategy);
+        if (command === "set_strategy" && m_pendingStrategy !== "") {
+            // The pending name is only set when the command was accepted, so
+            // report exactly that strategy and clear it either way.
+            const requested = m_pendingStrategy;
             m_pendingStrategy = "";
+            if (m_lastSuccess)
+                strategyApplied(requested);
+            else
+                strategyRejected(requested);
         }
 
         if (m_lastSuccess)
             refresh();
     }
 
-    function setOffline(reason) {
+    function setOffline() {
         m_online = false;
         m_active = false;
         m_currentStrategy = "";
         m_strategies = [];
-        m_temperature = 0;
+        m_temperature = -1;
         m_fanSpeed = 0;
 
-        if (reason) {
-            m_lastSuccess = false;
-            m_lastMessage = reason;
-        }
+        m_lastSuccess = false;
+        m_lastMessage = tr("fw-fanctrl is unavailable", "fw-fanctrl 不可用");
     }
 
     signal strategyApplied(string name)
@@ -218,11 +244,32 @@ Item {
         execCommand("get_status");
     }
 
+    // Returns true when the command was accepted. Refused or failed strategy
+    // changes emit strategyRejected() so the UI can roll back instead of
+    // showing a strategy that was never applied.
     function useStrategy(name) {
         if (!name)
-            return;
+            return false;
+        if (!m_online || m_busy) {
+            strategyRejected(name);
+            return false;
+        }
         m_pendingStrategy = name;
-        execCommand("set_strategy", shellQuote(name));
+        if (!execCommand("set_strategy", shellQuote(name))) {
+            m_pendingStrategy = "";
+            strategyRejected(name);
+            return false;
+        }
+        return true;
+    }
+
+    // Applies a configuration JSON staged by the configuration dialog.
+    // Returns true when the command was accepted; false means another command
+    // is in flight and the caller must keep the pending value for a retry.
+    function saveConfig(jsonText) {
+        if (!jsonText)
+            return false;
+        return execCommand("save_config", shellQuote(jsonText));
     }
 
     function reload() {
