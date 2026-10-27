@@ -34,12 +34,14 @@ jobs:
         # One full upgrade (-Syu), never `-Sy` followed by a separate install:
         # Arch does not support partial upgrades, and installing packages
         # against a stale sync database can pull in a mismatched glibc.
-        # git is needed by actions/checkout, kpackage provides kpackagetool6,
-        # breeze-icons lets us verify that metadata Icon really exists.
+        # git is needed by actions/checkout, make/tar/xz/findutils by the
+        # packaging step (the Arch base image has no build tools), kpackage
+        # provides kpackagetool6, and breeze-icons lets us verify that the
+        # metadata Icon really exists.
         run: >-
           pacman -Syu --needed --noconfirm
           git python qt6-declarative kirigami libplasma plasma5support
-          kpackage breeze-icons
+          kpackage breeze-icons make tar xz findutils
 
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
