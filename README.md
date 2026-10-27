@@ -72,7 +72,7 @@ cd fw-fanctrl-kde
 make install
 ```
 
-`make install` installs the widget through `kpackagetool6`, sets the helper script executable, and restarts Plasma. `make reinstall` reinstalls, `make uninstall` removes it, `make pack` creates the release archive, and `RESTART=n make install` skips the Plasma restart.
+`make install` builds the release archive (`../com.github.iwinoid.fw-fanctrl-kde-1.3.1.tar.xz`) and installs that archive through `kpackagetool6`, so only runtime files are installed. Reinstalling upgrades the existing package; a failed installation stops with the real error. Plasma is not restarted by default: run `make restart-plasma`, or use `RESTART=y make install`. `make reinstall` reinstalls, `make uninstall` removes the widget, `make pack` only builds the archive, and `make lint` runs the same strict qmllint check as CI.
 
 ### Uninstall
 
@@ -93,7 +93,7 @@ kpackagetool6 --type=Plasma/Applet --remove com.github.iwinoid.fw-fanctrl-kde
 - Real-time status: temperature, fan speed, active strategy (2 second poll)
 - Strategy switching: popup slider, or scroll wheel on the tray icon
 - KDE OSD notification when the strategy changes
-- Service control: reload, pause, resume, refresh
+- Service control: reload, pause, resume; live status refresh
 - Online/offline indication: icon, status text, paused animation
 - Config editor: create, edit, rename, delete, and drag-to-reorder strategies
 - Speed curve editor with automatic sorting by temperature
@@ -140,6 +140,9 @@ The backend exposes these commands. Each one prints a single JSON object on stdo
 | `pause` / `resume` | Pause or resume fan control |
 | `get_config` | The configuration and its schema |
 | `save_config <json>` | Validate and apply a new configuration |
+| `notify <title> <body>` | Show a desktop notification (fire-and-forget; the result is ignored) |
+
+The widget refreshes its status by calling `get_status` every 2 seconds and after each command; there is no separate `refresh` command.
 
 ## Maintainers
 

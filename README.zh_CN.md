@@ -75,7 +75,7 @@ cd fw-fanctrl-kde
 make install
 ```
 
-`make install` 通过 `kpackagetool6` 安装小部件，设置辅助脚本执行权限，并重启 Plasma。`make reinstall` 重装，`make uninstall` 卸载，`make pack` 打 Release 包。不想自动重启时用 `RESTART=n make install`。
+`make install` 先生成发布归档（`../com.github.iwinoid.fw-fanctrl-kde-1.3.1.tar.xz`），再从归档通过 `kpackagetool6` 安装，所以只会装运行时文件。重装会升级已有包；安装失败会带着真实错误停止。默认不重启 Plasma：需要时运行 `make restart-plasma`，或用 `RESTART=y make install`。`make reinstall` 重装，`make uninstall` 卸载，`make pack` 只打包，`make lint` 跑与 CI 相同的严格 qmllint 检查。
 
 ### 卸载
 
@@ -96,7 +96,7 @@ kpackagetool6 --type=Plasma/Applet --remove com.github.iwinoid.fw-fanctrl-kde
 - 实时状态：温度、风扇转速、当前策略（2 秒轮询）
 - 切换策略：弹出窗滑条，或托盘图标滚轮
 - 策略切换时显示 KDE OSD 通知
-- 服务控制：重载、暂停、恢复、刷新
+- 服务控制：重载、暂停、恢复；状态实时刷新
 - 在线/离线提示：图标、状态文字、暂停动画
 - 配置编辑器：新建、编辑、重命名、删除、拖拽排序策略
 - 速度曲线编辑器，按温度自动排序
@@ -143,6 +143,9 @@ QML (小组件界面)  ──executable DataSource──▶  scripts/fw_helper.p
 | `pause` / `resume` | 暂停或恢复风扇控制 |
 | `get_config` | 配置及其 schema |
 | `save_config <json>` | 校验并应用新配置 |
+| `notify <title> <body>` | 弹出桌面通知（发出即可，忽略结果） |
+
+小部件每 2 秒以及每条命令之后调用 `get_status` 刷新状态；没有单独的 `refresh` 命令。
 
 ## 维护者
 
