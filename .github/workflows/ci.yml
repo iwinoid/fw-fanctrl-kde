@@ -5,59 +5,137 @@ on:
     branches: [main]
   pull_request:
 
+# CI only reads the repository; it never pushes anything back.
+permissions:
+  contents: read
+
+# Superseded runs on the same ref are cancelled instead of piling up.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Container jobs default to `sh`, which does not support `set -o pipefail`;
+# every `run:` step here is a bash script, so make that explicit.
+defaults:
+  run:
+    shell: bash
+
+env:
+  PLASMOID_ID: com.github.iwinoid.fw-fanctrl-kde
+
 jobs:
   qml-lint:
-    name: QML lint
+    name: QML lint (Qt 6, strict)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     container: docker.io/archlinux:latest
     steps:
-      - name: Install git for actions/checkout
-        # The archlinux base image ships without git, but actions/checkout
-        # runs inside the container and needs the git CLI.
-        run: pacman -Sy --needed --noconfirm git
+      - name: Install toolchain
+        # One full upgrade (-Syu), never `-Sy` followed by a separate install:
+        # Arch does not support partial upgrades, and installing packages
+        # against a stale sync database can pull in a mismatched glibc.
+        # git is needed by actions/checkout, kpackage provides kpackagetool6,
+        # breeze-icons lets us verify that metadata Icon really exists.
+        run: >-
+          pacman -Syu --needed --noconfirm
+          git python qt6-declarative kirigami libplasma plasma5support
+          kpackage breeze-icons
 
       - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Install QML toolchain
-        # libplasma -> org.kde.plasma.{plasmoid,core,components}
-        # plasma5support -> org.kde.plasma.plasma5support
-        # kirigami -> org.kde.kirigami
-        # Only org.kde.plasma.workspace.osd (OsdWindow, in the huge
-        # plasma-workspace package) is not installed; its cascading warnings
-        # are filtered below.
-        run: pacman -Syu --noconfirm git qt6-declarative kirigami libplasma plasma5support
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: qmllint
-        # Tolerate only the OsdWindow / missing-workspace-osd-module cascade
-        # and generic module-load noise. Any real code problem must fail.
-        # Note: when a type is unresolved, "Member ... not found" warnings carry
-        # no type name, hence the last filter. Real missing-property warnings
-        # include the type name and still fail the job.
+        # .github/check-qmllint.py runs qmllint with --json and fails on any
+        # diagnostic (warning, error or info). Text-output filtering is not
+        # usable: .qmllint.ini sets MaxWarnings=-1, so ordinary warnings are not
+        # printed at all, and the previous keyword blacklist also swallowed the
+        # import-failure cascade that the missing plasma-workspace produces.
+        # The stub in .github/qmllint-stubs supplies OsdWindow/OsdItem, so the
+        # baseline is clean without installing plasma-workspace, and the same
+        # pipeline runs locally through `make lint`.
+        run: python3 .github/check-qmllint.py
+
+      - name: Validate metadata and configured icon
         run: |
           set -euo pipefail
-          /usr/lib/qt6/bin/qmllint \
-            contents/ui/main.qml contents/ui/FwBackend.qml contents/ui/configCurves.qml \
-            contents/config/config.qml \
-            > /tmp/lint.log 2>&1 || true
-          grep -E "^(Warning|Error)" /tmp/lint.log \
-            | grep -viE "(org\.kde\.plasma\.workspace\.osd|OsdWindow|osdValue|osdContent|showingProgress|osdPopup)" \
-            | grep -viE "(failed to import|warnings occurred while importing|is not resolved|was not found|is not installed|not found in any|no qualifying module|unknown attached property scope|unknown grouped property scope|import failure|cannot resolve alias)" \
-            | grep -viE "not found on type \[missing-property\]" \
-            > /tmp/real.log || true
-          if [ -s /tmp/real.log ]; then
-            echo "qmllint found real problems:"
-            cat /tmp/real.log
+          python3 - <<'PY'
+          import json
+          import os
+          import sys
+          from pathlib import Path
+
+          meta = json.loads(Path("metadata.json").read_text(encoding="utf-8"))
+          plugin = meta.get("KPlugin", {})
+          errors = []
+
+          if meta.get("KPackageStructure") != "Plasma/Applet":
+              errors.append("KPackageStructure must be 'Plasma/Applet'")
+          if plugin.get("Id") != os.environ["PLASMOID_ID"]:
+              errors.append(f"KPlugin.Id must be {os.environ['PLASMOID_ID']!r}")
+          for key in ("Name", "Description", "Icon", "Version", "License", "Category"):
+              if not plugin.get(key):
+                  errors.append(f"KPlugin.{key} is missing or empty")
+          main_script = meta.get("X-Plasma-MainScript")
+          if not main_script or not (Path("contents") / main_script).is_file():
+              errors.append(f"X-Plasma-MainScript {main_script!r} does not exist in contents/")
+
+          if errors:
+              print("metadata.json is invalid:", file=sys.stderr)
+              for error in errors:
+                  print(f"  {error}", file=sys.stderr)
+              sys.exit(1)
+          print("metadata.json OK")
+          PY
+          icon="$(python3 -c 'import json; print(json.load(open("metadata.json"))["KPlugin"]["Icon"])')"
+          # No pipe into `grep -q` here: grep -q exits after the first match,
+          # find gets SIGPIPE and pipefail would turn a found icon into an error.
+          icon_file="$(find /usr/share/icons -name "${icon}.*" -print -quit)"
+          if [ -z "$icon_file" ]; then
+            echo "icon '${icon}' from metadata.json does not exist in the installed icon themes" >&2
             exit 1
           fi
-          echo "qmllint: only environment-related warnings, OK"
+          echo "icon '${icon}' exists: $icon_file"
 
-  python-and-pack:
-    name: Python tests & packaging
+      - name: Build package and install it with kpackagetool6
+        # The only place that exercises real KF6 package handling: metadata,
+        # KPackageStructure and the runtime file layout. Both the fresh-install
+        # and the upgrade path that `make install` uses are covered.
+        run: |
+          set -euo pipefail
+          make pack
+          pkg="../${PLASMOID_ID}-$(python3 -c 'import json; print(json.load(open("metadata.json"))["KPlugin"]["Version"])').tar.xz"
+          echo "package: $pkg ($(du -h "$pkg" | cut -f1))"
+          packageroot="$PWD/tmp/packageroot"
+          rm -rf "$packageroot"
+          mkdir -p "$packageroot"
+          kpackagetool6 --packageroot "$packageroot" --type=Plasma/Applet --install "$pkg"
+          test -f "$packageroot/$PLASMOID_ID/metadata.json"
+          test -x "$packageroot/$PLASMOID_ID/scripts/fw_helper.py"
+          kpackagetool6 --packageroot "$packageroot" --type=Plasma/Applet --upgrade "$pkg"
+          test -f "$packageroot/$PLASMOID_ID/metadata.json"
+          test -x "$packageroot/$PLASMOID_ID/scripts/fw_helper.py"
+          # Development files must never reach the installed package.
+          test ! -e "$packageroot/$PLASMOID_ID/tests"
+          test ! -e "$packageroot/$PLASMOID_ID/docs"
+          test ! -e "$packageroot/$PLASMOID_ID/image"
+          echo "kpackagetool6 install/upgrade OK"
+
+  python-tests:
+    name: Python tests (${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: ${{ matrix.python-version }}
 
       - name: Compile backend
         run: python3 -m py_compile scripts/fw_helper.py
@@ -65,24 +143,108 @@ jobs:
       - name: Run unit tests
         run: python3 -m unittest discover -s tests -v
 
+  packaging:
+    name: Packaging checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Validate metadata.json
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          import sys
+          from pathlib import Path
+
+          meta = json.loads(Path("metadata.json").read_text(encoding="utf-8"))
+          plugin = meta.get("KPlugin", {})
+          errors = []
+
+          if plugin.get("Id") != os.environ["PLASMOID_ID"]:
+              errors.append(f"KPlugin.Id must be {os.environ['PLASMOID_ID']!r}")
+          if not plugin.get("Version"):
+              errors.append("KPlugin.Version is missing or empty")
+          if not plugin.get("License"):
+              errors.append("KPlugin.License is missing or empty")
+          if not plugin.get("Icon"):
+              errors.append("KPlugin.Icon is missing or empty")
+          main_script = meta.get("X-Plasma-MainScript")
+          if not main_script or not (Path("contents") / main_script).is_file():
+              errors.append(f"X-Plasma-MainScript {main_script!r} does not exist in contents/")
+
+          if errors:
+              print("metadata.json is invalid:", file=sys.stderr)
+              for error in errors:
+                  print(f"  {error}", file=sys.stderr)
+              sys.exit(1)
+          print("metadata.json OK")
+          PY
+
       - name: Build release package
         run: make pack
 
-      - name: Verify package contents
-        # Note: avoid `tar | grep -q` under `set -o pipefail` — grep -q closes
-        # the pipe early, tar dies with SIGPIPE, and pipefail turns that into a
-        # failure even on a successful match. Read the listing into a file first.
+      - name: Check that a default install would not restart Plasma
         run: |
           set -euo pipefail
-          pkg="$(ls ../com.github.iwinoid.fw-fanctrl-kde-*.tar.xz)"
-          echo "package: $pkg ($(du -h "$pkg" | cut -f1))"
-          tar -tf "$pkg" > /tmp/pkglist
-          grep -q "fw-fanctrl-kde/metadata.json"      /tmp/pkglist || { echo "metadata.json missing"; exit 1; }
-          grep -q "fw-fanctrl-kde/contents/ui/main.qml" /tmp/pkglist || { echo "main.qml missing"; exit 1; }
-          grep -q "fw-fanctrl-kde/scripts/fw_helper.py" /tmp/pkglist || { echo "fw_helper.py missing"; exit 1; }
-          if grep -qE "(^|/)tests?/|\.qmllint\.ini|\.github/|docs/|HANDOFF\.md|pkglist" /tmp/pkglist; then
-            echo "dev-only files leaked into the release package"
-            grep -E "(^|/)tests?/|\.qmllint\.ini|\.github/|docs/|HANDOFF\.md|pkglist" /tmp/pkglist
+          make -n install > /tmp/install-dry-run.txt
+          cat /tmp/install-dry-run.txt
+          grep -q 'Plasma shell not restarted (RESTART=n)' /tmp/install-dry-run.txt
+          if grep -qE 'kquitapp6|systemctl --user restart' /tmp/install-dry-run.txt; then
+            echo "default 'make install' would restart the Plasma shell; expected RESTART=n" >&2
             exit 1
           fi
-          echo "package contents OK"
+          if grep -qE 'cp -r \./\*' Makefile; then
+            echo "the dirty 'cp -r ./*' reinstall fallback came back" >&2
+            exit 1
+          fi
+          echo "dry run OK: install stays on the archive, restart is opt-in"
+
+      - name: Verify package contents and permissions
+        # The archive is a runtime whitelist: the exact listing below is
+        # asserted, so a new development file cannot slip in unnoticed. The
+        # helper script must stay executable for the Plasma DataSource.
+        # Note: avoid `tar | grep -q` under `set -o pipefail` — grep -q closes
+        # the pipe early, tar dies with SIGPIPE, and pipefail turns that into a
+        # failure even on a successful match. Read listings into files first.
+        run: |
+          set -euo pipefail
+          version="$(python3 -c 'import json; print(json.load(open("metadata.json"))["KPlugin"]["Version"])')"
+          pkg="../${PLASMOID_ID}-${version}.tar.xz"
+          test -f "$pkg" || { echo "archive $pkg was not produced" >&2; exit 1; }
+          echo "package: $pkg ($(du -h "$pkg" | cut -f1))"
+
+          tar -tJf "$pkg" | LC_ALL=C sort > /tmp/package-listing.txt
+          cat > /tmp/package-listing.expected <<'EOF'
+          com.github.iwinoid.fw-fanctrl-kde/
+          com.github.iwinoid.fw-fanctrl-kde/LICENSE
+          com.github.iwinoid.fw-fanctrl-kde/contents/
+          com.github.iwinoid.fw-fanctrl-kde/contents/config/
+          com.github.iwinoid.fw-fanctrl-kde/contents/config/config.qml
+          com.github.iwinoid.fw-fanctrl-kde/contents/config/main.xml
+          com.github.iwinoid.fw-fanctrl-kde/contents/images/
+          com.github.iwinoid.fw-fanctrl-kde/contents/images/fan.svg
+          com.github.iwinoid.fw-fanctrl-kde/contents/ui/
+          com.github.iwinoid.fw-fanctrl-kde/contents/ui/FwBackend.qml
+          com.github.iwinoid.fw-fanctrl-kde/contents/ui/configCurves.qml
+          com.github.iwinoid.fw-fanctrl-kde/contents/ui/main.qml
+          com.github.iwinoid.fw-fanctrl-kde/metadata.json
+          com.github.iwinoid.fw-fanctrl-kde/scripts/
+          com.github.iwinoid.fw-fanctrl-kde/scripts/fw_helper.py
+          EOF
+          diff -u /tmp/package-listing.expected /tmp/package-listing.txt
+
+          # Archive root directory must be the plasmoid id (metadata KPlugin.Id),
+          # not the repository checkout name. The C-sorted listing starts with
+          # the root entry, so read it from the file instead of piping tar into
+          # head (SIGPIPE + pipefail would abort the step).
+          first_entry="$(head -n1 /tmp/package-listing.txt)"
+          test "$first_entry" = "${PLASMOID_ID}/"
+
+          tar -tvJf "$pkg" > /tmp/package-verbose.txt
+          awk '$1 ~ /^-rwx/ && $NF ~ /\/scripts\/fw_helper\.py$/ { found = 1 } END { exit !found }' \
+            /tmp/package-verbose.txt
+          echo "package contents and permissions OK"

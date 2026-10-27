@@ -1,7 +1,8 @@
-fw-fanctrl-plasmoid.code-workspace
-.Rhistory
+# Local scratch space for previews, screenshots and verification scripts.
+tmp/
 __pycache__/
 *.pyc
 *.tar.gz
-# Local scratch space for previews, screenshots and verification scripts.
-tmp/
+*.tar.xz
+*.log
+.venv/
